@@ -1,0 +1,26 @@
+{
+    "textures": [
+        "Assets/Textures/Blocks/stone.png",
+        "Assets/Textures/Blocks/dirt.png",
+        "Assets/Textures/Blocks/grass_top.png",
+        "Assets/Textures/Blocks/grass_side.png"
+    ],
+    "blocks": {
+        "stone": {
+            "id": 1,
+            "texture": "stone.png"
+        },
+        "dirt": {
+            "id": 2,
+            "texture": "dirt.png"
+        },
+        "grass": {
+            "id": 3,
+            "textures": {
+                "top": "grass_top.png",
+                "bottom": "dirt.png",
+                "sides": "grass_side.png"
+            }
+        }
+    }
+}
