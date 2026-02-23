@@ -23,13 +23,14 @@ cbuffer SkyPropertiesBuffer : register(b1)
     float atmosphereThickness;
     float rayleighScattering; // Blue light scattering
     float mieScattering;      // Haze/fog scattering
-    float padding1;
+    float hasSkyboxTexture;
 };
 
 // TEXTURES & SAMPLERS
-Texture2D cloudTexture : register(t0);
-Texture2D starTexture  : register(t1);
-Texture2D moonTexture  : register(t2);
+Texture2D cloudTexture   : register(t0);
+Texture2D starTexture    : register(t1);
+Texture2D moonTexture    : register(t2);
+Texture2D skyboxTexture  : register(t3);
 
 SamplerState linearSampler : register(s0);
 
@@ -129,6 +130,16 @@ float3 DrawStars(float3 viewDir, float nightFactor)
 float4 main(PixelInput input) : SV_TARGET
 {
     float3 viewDir = normalize(input.viewDirection);
+
+    // SKYBOX TEXTURE (equirectangular panorama)
+    if (hasSkyboxTexture > 0.5)
+    {
+        float2 skyUV;
+        skyUV.x = atan2(viewDir.x, viewDir.z) / (2.0 * PI) + 0.5;
+        skyUV.y = -viewDir.y * 0.5 + 0.5;
+        float4 skyboxColor = skyboxTexture.Sample(linearSampler, skyUV);
+        return float4(skyboxColor.rgb, 1.0);
+    }
 
     // DAY/NIGHT CYCLE
     float dayNightBlend = GetDayNightBlend(timeOfDay);

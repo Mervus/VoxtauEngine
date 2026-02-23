@@ -10,6 +10,7 @@
 #include "Core/Math/MathTypes.h"
 #include "Renderer/Shaders/ShaderTypes.h"
 
+class Texture;
 class IRendererApi;
 class ShaderCollection;
 class ShaderProgram;
@@ -34,6 +35,7 @@ public:
 
     // Day/night cycle speed: 0 = frozen, 1.0 = normal
     void SetDaySpeed(float speed) { _daySpeed = speed; }
+    bool LoadSkyboxTexture(const std::string& filepath);
 
     // Get current sun direction (for lighting other systems)
     Math::Vector3 GetSunDirection() const;
@@ -42,6 +44,7 @@ private:
     IRendererApi* _renderer;
     ShaderCollection* _shaderCollection;
 
+    Texture* _skyboxTexture = nullptr;
     Mesh* _domeMesh = nullptr;
     void* _skyVertexCB = nullptr;    // b0
     void* _skyPropertiesCB = nullptr; // b1

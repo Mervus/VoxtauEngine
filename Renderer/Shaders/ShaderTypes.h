@@ -108,7 +108,7 @@ struct SkyPropertiesConstants {
     float atmosphereThickness;
     float rayleighScattering;
     float mieScattering;
-    float padding1;
+    float hasSkyboxTexture;
 };
 
 // Per-effect constant buffer — effects can extend this

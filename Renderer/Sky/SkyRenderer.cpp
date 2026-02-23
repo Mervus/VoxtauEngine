@@ -8,6 +8,8 @@
 #include "Renderer/Shaders/ShaderCollection.h"
 #include "Renderer/Shaders/ShaderProgram.h"
 #include "Resources/MeshGenerator.h"
+#include "Resources/Texture.h"
+#include "Resources/TextureData.h"
 #include <cmath>
 #include <iostream>
 
@@ -58,6 +60,27 @@ void SkyRenderer::Shutdown()
         _renderer->DestroyConstantBuffer(_skyPropertiesCB);
         _skyPropertiesCB = nullptr;
     }
+}
+
+bool SkyRenderer::LoadSkyboxTexture(const std::string& filepath)
+{
+    TextureData texData;
+    if (!texData.LoadFromFile(filepath)) {
+        std::cerr << "SkyRenderer: Failed to load skybox texture: " << filepath << std::endl;
+        return false;
+    }
+    texData.ConvertToRGBA();
+
+    auto* tex = new Texture("skybox");
+    if (!_renderer->CreateTexture(tex, texData)) {
+        std::cerr << "SkyRenderer: Failed to create skybox GPU texture!" << std::endl;
+        delete tex;
+        return false;
+    }
+
+    _skyboxTexture = tex;
+    std::cout << "SkyRenderer: Loaded skybox texture: " << filepath << std::endl;
+    return true;
 }
 
 Math::Vector3 SkyRenderer::GetSunDirection() const
@@ -153,6 +176,7 @@ void SkyRenderer::Render(const Math::Matrix4x4& viewProjection,
     skyProps.atmosphereThickness = 1.0f;
     skyProps.rayleighScattering = 0.05f;
     skyProps.mieScattering = 0.02f;
+    skyProps.hasSkyboxTexture = _skyboxTexture ? 1.0f : 0.0f;
 
     _renderer->UpdateConstantBuffer(_skyPropertiesCB, &skyProps, sizeof(skyProps));
 
@@ -175,13 +199,17 @@ void SkyRenderer::Render(const Math::Matrix4x4& viewProjection,
     _renderer->BindConstantBuffer(0, _skyVertexCB, ShaderStage::Vertex);
     _renderer->BindConstantBuffer(1, _skyPropertiesCB, ShaderStage::Pixel);
 
-    // No textures bound for now — pixel shader will use procedural sky
-    // (cloud/star/moon textures on t0-t2 are sampled but will return 0 if unbound,
-    //  the shader handles this gracefully with its procedural fallbacks)
+    if (_skyboxTexture) {
+        _renderer->BindTexture(3, _skyboxTexture);
+    }
 
     _renderer->Draw(_domeMesh);
 
-    // ── Restore render state ──
+    if (_skyboxTexture) {
+        _renderer->UnbindTexture(3);
+    }
+
+    // Restore render state
     _renderer->SetDepthMode(DepthMode::Less);
     _renderer->SetDepthWriteEnabled(true);
     _renderer->SetRasterizerMode(RasterizerMode::Solid);
