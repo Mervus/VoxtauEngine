@@ -110,7 +110,8 @@ FetchContent_MakeAvailable(VoxtauEngine)
 
 add_executable(MyGame main.cpp)
 target_link_libraries(MyGame PRIVATE Engine)
-
+# Ensure game Assets directory exists
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Assets)
 # Copy your game assets to the output directory
 add_custom_target(copy_game_assets
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -160,7 +161,8 @@ endif()
 
 add_executable(MyGame main.cpp)
 target_link_libraries(MyGame PRIVATE Engine)
-
+# Ensure game Assets directory exists
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Assets)
 # Copy your game assets to the output directory
 add_custom_target(copy_game_assets
     COMMAND ${CMAKE_COMMAND} -E copy_directory
