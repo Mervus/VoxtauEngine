@@ -5,6 +5,7 @@
 #ifndef DIRECTX11_APPLICATION_H
 #define DIRECTX11_APPLICATION_H
 #include <chrono>
+#include <memory>
 #include <EngineApi.h>
 
 #include "GLFW/glfw3.h"
@@ -33,19 +34,19 @@ private:
     bool _vsync;
 
     // Core systems
-    IRendererApi* renderer;
-    ShaderCollection* shaderCollection;
-    ResourceManager* resourceManager;
-    SceneManager* sceneManager;
+    std::unique_ptr<IRendererApi> renderer;
+    std::unique_ptr<ShaderCollection> shaderCollection;
+    std::unique_ptr<ResourceManager> resourceManager;
+    std::unique_ptr<SceneManager> sceneManager;
 
     // ImGui
-    ImGuiManager* imguiManager;
-    SceneHierarchyWindow* sceneHierarchyWindow;
-    PerformanceWindow* performanceWindow;
-    ProfilerWindow* profilerWindow;
-    CompassWindow* compassWindow;
+    std::unique_ptr<ImGuiManager> imguiManager;
+    std::unique_ptr<SceneHierarchyWindow> sceneHierarchyWindow;
+    std::unique_ptr<PerformanceWindow> performanceWindow;
+    std::unique_ptr<ProfilerWindow> profilerWindow;
+    std::unique_ptr<CompassWindow> compassWindow;
 
-    InputManager* inputManager;
+    std::unique_ptr<InputManager> inputManager;
 
     // Timing
     float deltaTime;
@@ -62,8 +63,8 @@ public:
     void Render();
 
     void SetVsync(bool vsync);
-    [[nodiscard]] SceneManager* GetSceneManager() const { return sceneManager; }
-    [[nodiscard]] InputManager* GetInputManager() const { return inputManager; }
+    [[nodiscard]] SceneManager* GetSceneManager() const { return sceneManager.get(); }
+    [[nodiscard]] InputManager* GetInputManager() const { return inputManager.get(); }
 private:
     static void HandleResize(
         GLFWwindow* window,

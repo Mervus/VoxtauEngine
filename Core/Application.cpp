@@ -24,11 +24,6 @@ Application::Application(const std::string &title)
       , windowWidth(0)
       , windowHeight(0)
       , isRunning(false)
-      , renderer(nullptr)
-      , shaderCollection(nullptr)
-      , resourceManager(nullptr)
-      , sceneManager(nullptr)
-      , imguiManager(nullptr), sceneHierarchyWindow(nullptr), performanceWindow(nullptr), profilerWindow(nullptr)
       , deltaTime(0.0f)
       , lastFrameTime(0.0f)
       , _vsync(false)
@@ -57,34 +52,34 @@ bool Application::Initialize() {
     this->windowHeight = _height;
 
     // INITIALIZE RENDERER
-    renderer = new DirectX11Renderer();
+    renderer = std::make_unique<DirectX11Renderer>();
     if (!renderer->Initialize(windowHandle, _width, _height)) {
         std::cerr << "Failed to initialize renderer!" << std::endl;
         return false;
     }
 
-    inputManager = new InputManager(_window);
+    inputManager = std::make_unique<InputManager>(_window);
 
     // INITIALIZE SHADERS
-    shaderCollection = new ShaderCollection(renderer);
+    shaderCollection = std::make_unique<ShaderCollection>(renderer.get());
     shaderCollection->Initialize();
 
     // INITIALIZE RESOURCE MANAGER
-    resourceManager = new ResourceManager(renderer, shaderCollection);
+    resourceManager = std::make_unique<ResourceManager>(renderer.get(), shaderCollection.get());
 
     // INITIALIZE SCENE MANAGER
-    sceneManager = new SceneManager(renderer, shaderCollection, resourceManager, inputManager);
+    sceneManager = std::make_unique<SceneManager>(renderer.get(), shaderCollection.get(), resourceManager.get(), inputManager.get());
 
-    imguiManager = new ImGuiManager();
+    imguiManager = std::make_unique<ImGuiManager>();
     if (!imguiManager->Initialize(_window, renderer->GetDevice(), renderer->GetContext())) {
         std::cerr << "Failed to initialize ImGui!" << std::endl;
         return false;
     }
 
-    sceneHierarchyWindow = new SceneHierarchyWindow();
-    performanceWindow = new PerformanceWindow();
-    profilerWindow = new ProfilerWindow();
-    compassWindow = new CompassWindow();
+    sceneHierarchyWindow = std::make_unique<SceneHierarchyWindow>();
+    performanceWindow = std::make_unique<PerformanceWindow>();
+    profilerWindow = std::make_unique<ProfilerWindow>();
+    compassWindow = std::make_unique<CompassWindow>();
 
     // Bind scene hierarchy update to scene loading
     sceneManager->SetOnSceneLoaded([this](Scene* scene) {
@@ -194,15 +189,16 @@ void Application::Render()
 void Application::Shutdown() {
     std::cout << "Shutting down Application..." << std::endl;
 
-    delete sceneManager;
-    delete resourceManager;
-    delete shaderCollection;
-    delete renderer;
-
-    sceneManager = nullptr;
-    resourceManager = nullptr;
-    shaderCollection = nullptr;
-    renderer = nullptr;
+    sceneManager.reset();
+    resourceManager.reset();
+    shaderCollection.reset();
+    imguiManager.reset();
+    sceneHierarchyWindow.reset();
+    performanceWindow.reset();
+    profilerWindow.reset();
+    compassWindow.reset();
+    inputManager.reset();
+    renderer.reset();
 
     std::cout << "Application shutdown complete." << std::endl;
 }
@@ -238,7 +234,7 @@ void Application::Cleanup()
 bool Application::InitializeCustomShaderCollection()
 {
     // Create shader collection
-    shaderCollection = new ShaderCollection(renderer);
+    shaderCollection = std::make_unique<ShaderCollection>(renderer.get());
     shaderCollection->Initialize(); // Loads all common shaders
 
     // Load any additional custom shaders
