@@ -53,6 +53,9 @@ public:
                        VoxelRenderer* voxelRenderer,
                        TextureArray* blockTextures);
 
+    void SetVoxelWorld(ChunkManager* chunkManager,
+                       VoxelRenderer* voxelRenderer);
+
     // Distant terrain
     void SetDistantTerrain(DistantTerrainRenderer* distantTerrain);
 
@@ -94,7 +97,6 @@ private:
     // References (not owned — set each frame or once)
     Camera* _camera = nullptr;
     ChunkManager* _chunkManager = nullptr;
-    TextureArray* _blockTextures = nullptr;
 
     // Renderer
     VoxelRenderer* _voxelRenderer = nullptr;

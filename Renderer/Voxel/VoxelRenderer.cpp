@@ -19,7 +19,18 @@ VoxelRenderer::VoxelRenderer(IRendererApi* renderer, ShaderCollection* shaderCol
     : _renderer(renderer)
     , _shaderCollection(shaderCollection)
     , _blockRegistry(blockRegistry)
+    , _blockTextures(new TextureArray("BlockTextures"))
 {
+}
+
+VoxelRenderer::VoxelRenderer(IRendererApi* renderer, ShaderCollection* shaderCollection)
+    : _renderer(renderer)
+    , _shaderCollection(shaderCollection)
+{
+    _blockRegistry = new BlockRegistry();
+    _blockRegistry->LoadFromFile("Assets/Data/blocks.json");
+
+    _blockTextures = new TextureArray("BlockTextures");
 }
 
 VoxelRenderer::~VoxelRenderer()
@@ -34,6 +45,10 @@ void VoxelRenderer::Initialize(bool useGPUMeshing)
 
     if (_useGPUMeshing) {
         InitializeComputeResources();
+    }
+
+    if (!_blockRegistry->CreateTextureArray(_renderer, _blockTextures)) {
+        std::cerr << "[Demo] Failed to create block texture array!" << std::endl;
     }
 
     std::cout << "VoxelRenderer initialized. GPU meshing: " << (_useGPUMeshing ? "ON" : "OFF") << std::endl;

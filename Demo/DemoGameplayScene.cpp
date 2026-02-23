@@ -112,7 +112,7 @@ void DemoGameplayScene::OnInit()
     _voxelRenderer->Initialize(true);
     _voxelRenderer->SetChunkManager(_chunkManager);
 
-    _renderPipeline->SetVoxelWorld(_chunkManager, _voxelRenderer, _blockTextureArray);
+    _renderPipeline->SetVoxelWorld(_chunkManager, _voxelRenderer);
     _renderPipeline->SetSkyRenderer(_skyRenderer);
     _renderPipeline->SetDebugRenderer(_debugLineRenderer);
 
@@ -166,7 +166,6 @@ void DemoGameplayScene::OnDestroy()
 void DemoGameplayScene::Update(float deltaTime)
 {
     PROFILE_FUNCTION();
-    _totalTime += deltaTime;
 
     _playerController->Update(deltaTime);
 
@@ -202,9 +201,6 @@ void DemoGameplayScene::SetupBlockRegistry()
     _blockRegistry->LoadFromFile("Assets/Data/blocks.json");
 
     _blockTextureArray = new TextureArray("BlockTextures");
-    if (!_blockRegistry->CreateTextureArray(renderer, _blockTextureArray)) {
-        std::cerr << "[Demo] Failed to create block texture array!" << std::endl;
-    }
 }
 
 void DemoGameplayScene::SetupCamera()

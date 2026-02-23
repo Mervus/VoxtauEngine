@@ -33,6 +33,7 @@ protected:
     ResourceManager* resourceManager;
     InputManager* inputManager;
 
+    float _totalTime = 0.0f;
 public:
     Scene(const std::string& name);
     virtual ~Scene();

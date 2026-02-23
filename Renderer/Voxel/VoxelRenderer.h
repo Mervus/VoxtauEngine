@@ -24,6 +24,7 @@ class Chunk;
 class VoxelRenderer {
 public:
     VoxelRenderer(IRendererApi* renderer, ShaderCollection* shaderCollection, BlockRegistry* blockRegistry);
+    VoxelRenderer(IRendererApi* renderer, ShaderCollection* shaderCollection);
     ~VoxelRenderer();
 
     void Initialize(bool useGPUMeshing = true);
@@ -46,11 +47,13 @@ public:
     void SetFrustumCullingEnabled(bool enabled) { _frustumCullingEnabled = enabled; }
 
     void SetChunkManager(ChunkManager* cm) { _chunkManager = cm; }
+    [[nodiscard]] TextureArray* GetBlockTextureArray() const { return _blockTextures; }
 private:
     IRendererApi* _renderer;
     ShaderCollection* _shaderCollection;
     BlockRegistry* _blockRegistry;
     ChunkManager* _chunkManager;
+    TextureArray* _blockTextures;
 
     bool _useGPUMeshing = true;
     bool _frustumCullingEnabled = true;

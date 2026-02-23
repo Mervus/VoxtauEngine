@@ -102,12 +102,10 @@ void RenderPipeline::SetCamera(Camera* camera)
 }
 
 void RenderPipeline::SetVoxelWorld(ChunkManager* chunkManager,
-                                    VoxelRenderer* voxelRenderer,
-                                    TextureArray* blockTextures)
+                                    VoxelRenderer* voxelRenderer)
 {
     _chunkManager = chunkManager;
     _voxelRenderer = voxelRenderer;
-    _blockTextures = blockTextures;
 }
 
 void RenderPipeline::SetDistantTerrain(DistantTerrainRenderer* distantTerrain)
@@ -224,7 +222,7 @@ void RenderPipeline::RenderVoxels()
     }
 
     Math::Matrix4x4 vp = _camera->GetViewProjectionMatrix();
-    _voxelRenderer->Render(vp, _perFrameBuffer, _perObjectBuffer, _blockTextures);
+    _voxelRenderer->Render(vp, _perFrameBuffer, _perObjectBuffer, _voxelRenderer->GetBlockTextureArray());
 }
 
 

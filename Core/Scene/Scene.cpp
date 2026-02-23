@@ -48,6 +48,7 @@ void Scene::SetActive(bool active) {
 void Scene::Update(float deltaTime) {
     if (!isActive) return;
 
+    _totalTime += deltaTime;
 }
 
 void Scene::LateUpdate(float deltaTime) {

@@ -73,7 +73,6 @@ private:
     PlayerController* _playerController   = nullptr;
     VoxelPhysics* _voxelPhysics           = nullptr;
 
-    float _totalTime = 0.0f;
 
     // World size (in chunks)
     static constexpr int RENDER_DISTANCE = 8;
