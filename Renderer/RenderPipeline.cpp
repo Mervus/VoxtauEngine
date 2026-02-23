@@ -102,7 +102,7 @@ void RenderPipeline::SetCamera(Camera* camera)
 }
 
 void RenderPipeline::SetVoxelWorld(ChunkManager* chunkManager,
-                                    VoxelRenderer* voxelRenderer)
+                                   VoxelRenderer* voxelRenderer)
 {
     _chunkManager = chunkManager;
     _voxelRenderer = voxelRenderer;

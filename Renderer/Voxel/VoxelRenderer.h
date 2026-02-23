@@ -45,9 +45,10 @@ public:
     size_t GetRegisteredChunkCount() const { return _chunkGpuData.size(); }
 
     void SetFrustumCullingEnabled(bool enabled) { _frustumCullingEnabled = enabled; }
-
+    void SetBlockTextureArray(TextureArray* array) { _blockTextures = array; }
     void SetChunkManager(ChunkManager* cm) { _chunkManager = cm; }
     [[nodiscard]] TextureArray* GetBlockTextureArray() const { return _blockTextures; }
+    [[nodiscard]] BlockRegistry* GetBlockRegistry() const { return _blockRegistry; }
 private:
     IRendererApi* _renderer;
     ShaderCollection* _shaderCollection;
