@@ -206,15 +206,6 @@ void RenderPipeline::RenderSky(float totalTime)
     _sky->Render(vp, _camera->GetPosition(), totalTime);
 }
 
-void RenderPipeline::RenderDistantTerrain()
-{
-    if (!_distantTerrain) return;
-
-    PROFILE_SCOPE("DistantTerrain");
-
-    _distantTerrain->Render(_perFrameBuffer, _perObjectBuffer);
-}
-
 void RenderPipeline::RenderVoxels()
 {
     if (!_chunkManager || !_voxelRenderer) return;

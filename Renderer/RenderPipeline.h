@@ -110,7 +110,6 @@ private:
     // Render passes
     void UpdatePerFrameBuffer(float totalTime);
     void RenderSky(float totalTime);
-    void RenderDistantTerrain();
     void RenderVoxels();
     void RenderEntities();
     void RenderDebug();
