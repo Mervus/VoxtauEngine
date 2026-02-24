@@ -159,16 +159,13 @@ void RenderPipeline::Execute(float deltaTime, float totalTime)
     // PASS 1: Sky
     RenderSky(totalTime);
 
-    // PASS 2: Distant terrain Sieht kacke aus.
-    //RenderDistantTerrain();
-
     // PASS 3: Voxel world
     RenderVoxels();
 
     // Clean up voxel texture binding before entities
     _renderer->UnbindTexture(0);
 
-    // PASS 4: Entities#
+    // PASS 4: Entities
     _entityRenderer->Render(_perObjectBuffer, _debugCameraMode);
 
     // PASS 5: Debug overlays

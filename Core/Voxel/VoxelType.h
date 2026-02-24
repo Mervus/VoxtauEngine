@@ -10,13 +10,14 @@
 
 typedef uint8_t VoxelType;
 
-enum class BlockType : uint8_t {
-    Air = 0,
-    Stone = 1,
-    Dirt = 2,
-    Grass = 3,
-    Wood = 4,
-    Leaves = 5
-};
+// Extensible block type constants
+namespace BlockType {
+    constexpr VoxelType Air    = 0;
+    constexpr VoxelType Stone  = 1;
+    constexpr VoxelType Dirt   = 2;
+    constexpr VoxelType Grass  = 3;
+    constexpr VoxelType Wood   = 4;
+    constexpr VoxelType Leaves = 5;
+}
 
 #endif //VOXTAU_VOXELTYPE_H

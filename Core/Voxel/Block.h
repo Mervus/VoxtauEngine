@@ -11,11 +11,11 @@
 class ENGINE_API Block : public Voxel
 {
 public:
-    Block(BlockType _block_type);
+    Block(VoxelType _block_type);
     Block();
     ~Block();
 private:
-    BlockType _blockType;
+    VoxelType _blockType;
 };
 
 

@@ -60,11 +60,11 @@ void DemoTerrainGenerator::GenerateChunk(Chunk* chunk) const
 
                 uint8_t blockType;
                 if (depth == 0) {
-                    blockType = static_cast<uint8_t>(BlockType::Grass);
+                    blockType = BlockType::Grass;
                 } else if (depth < 4) {
-                    blockType = static_cast<uint8_t>(BlockType::Dirt);
+                    blockType = BlockType::Dirt;
                 } else {
-                    blockType = static_cast<uint8_t>(BlockType::Stone);
+                    blockType = BlockType::Stone;
                 }
 
                 chunk->SetBlock(x, y, z, blockType);

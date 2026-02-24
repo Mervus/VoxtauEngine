@@ -4,7 +4,7 @@
 
 #include "Block.h"
 
-Block::Block(BlockType _block_type) : _blockType(_block_type)
+Block::Block(VoxelType _block_type) : _blockType(_block_type)
 {
 
 }

@@ -146,6 +146,13 @@ void VoxelRenderer::ProcessMeshQueue(uint32_t maxPerFrame)
             continue;  // Already up to date
         }
 
+        // Validate GPU buffers before use
+        if (!data.voxelBuffer || !data.vertexBuffer || !data.counterBuffer) {
+            std::cerr << "ERROR: Chunk GPU buffers are null, skipping" << std::endl;
+            data.isDirty = false;
+            continue;
+        }
+
         // Upload voxel data from CPU to GPU
         UploadVoxelData(chunk, data);
 
@@ -157,11 +164,17 @@ void VoxelRenderer::ProcessMeshQueue(uint32_t maxPerFrame)
 
         // Read back face count for culling
         data.faceCount = ReadBackFaceCount(data);
-        if (data.faceCount == 0) {
-            DestroyChunkGpuBuffers(data);
-            // Keep in _chunkGpuData but with isInitialized=false
-            // so it's skipped in render loop
+        if (data.faceCount > Chunk::MAX_FACES_PER_CHUNK) {
+            std::cerr << "WARNING: Chunk face count " << data.faceCount
+                      << " exceeds MAX " << Chunk::MAX_FACES_PER_CHUNK
+                      << ", clamping" << std::endl;
+            data.faceCount = Chunk::MAX_FACES_PER_CHUNK;
         }
+        // faceCount==0 chunks are skipped in the render loop naturally.
+        // Do NOT destroy their GPU buffers — the destroy path has type
+        // mismatches (ByteAddress/IndirectArgs freed as StructuredBuffer)
+        // and it also leaves the chunk in a broken state (isInitialized=false
+        // but still in the map, so it can never be re-registered).
         data.isDirty = false;
         _cullDataDirty = true;
         processed++;
@@ -208,6 +221,7 @@ void VoxelRenderer::RenderChunksGPU(const Math::Matrix4x4& viewProjection, void*
     for (auto& [chunk, data] : _chunkGpuData) {
         if (data.isDirty || !data.isInitialized) continue;
         if (data.faceCount == 0) continue;
+        if (!data.vertexSRV) continue;
 
         // Update per-object constants with chunk world position (int3)
         ChunkPositionBuffer chunkPos;
@@ -368,7 +382,6 @@ void VoxelRenderer::CreateChunkGpuBuffers(ChunkGpuData& data)
         sizeof(uint32_t), PADDED_PACKED_COUNT, true, false);
     data.voxelSRV = _renderer->CreateStructuredBufferSRV(data.voxelBuffer);
 
-    // Everything else stays the same:
     data.vertexBuffer = _renderer->CreateStructuredBuffer(
         4, Chunk::MAX_FACES_PER_CHUNK * 2, false, true);
     data.vertexSRV = _renderer->CreateStructuredBufferSRV(data.vertexBuffer);
@@ -379,6 +392,16 @@ void VoxelRenderer::CreateChunkGpuBuffers(ChunkGpuData& data)
 
     data.drawArgsBuffer = _renderer->CreateIndirectArgsBuffer(20, true);
     data.drawArgsUAV = _renderer->CreateIndirectArgsBufferUAV(data.drawArgsBuffer);
+
+    // Verify all allocations succeeded
+    if (!data.voxelBuffer || !data.voxelSRV ||
+        !data.vertexBuffer || !data.vertexSRV || !data.vertexUAV ||
+        !data.counterBuffer || !data.counterUAV ||
+        !data.drawArgsBuffer || !data.drawArgsUAV) {
+        std::cerr << "ERROR: Failed to create chunk GPU buffers!" << std::endl;
+        DestroyChunkGpuBuffers(data);
+        return;
+    }
 
     data.isInitialized = true;
 }
