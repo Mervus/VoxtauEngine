@@ -40,6 +40,8 @@ public:
     void Render(IRendererApi* pRenderer, Shader* vertexShader);
 
     bool IsEmpty() const { return _solidBlockCount == 0; }
+    void IncreaseSolidBlockCount() { _solidBlockCount++; }
+    void DecreaseSolidBlockCount() { _solidBlockCount--; }
 
     // State
     bool IsDirty() const { return isDirty; }

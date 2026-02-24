@@ -79,7 +79,13 @@ void ChunkManager::SetBlockAt(int worldX, int worldY, int worldZ, uint8_t blockT
     Math::Vector3 chunkPos = WorldToChunkCoords(worldX, worldY, worldZ);
 
     auto it = chunks.find(chunkPos);
-    if (it == chunks.end()) return; // Chunk not loaded
+    if (it == chunks.end()) {
+        if (blockType == 0) return; // No need to create a chunk just to place air
+
+        auto* chunk = new Chunk(chunkPos);
+        AddChunk(chunkPos, chunk);
+        it = chunks.find(chunkPos);
+    }
 
     int localX, localY, localZ;
     WorldToLocalCoords(worldX, worldY, worldZ, localX, localY, localZ);
@@ -107,8 +113,14 @@ Chunk* ChunkManager::CreateChunk(int chunkX, int chunkY, int chunkZ) {
         chunkGenerator->GenerateChunk(chunk);
     }
 
-    AddChunk(chunkPos, chunk);
-    return chunk;
+    if (!chunk->IsEmpty())
+    {
+        AddChunk(chunkPos, chunk);
+        return chunk;
+    }
+
+    delete chunk;
+    return nullptr;
 }
 
 void ChunkManager::GenerateChunkMesh(Chunk* chunk) {
