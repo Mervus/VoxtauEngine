@@ -48,7 +48,7 @@ void VoxelRenderer::Initialize(bool useGPUMeshing)
     }
 
     if (!_blockRegistry->CreateTextureArray(_renderer, _blockTextures)) {
-        std::cerr << "[Demo] Failed to create block texture array!" << std::endl;
+        std::cerr << "VoxelRenderer:51 Failed to create block texture array!" << std::endl;
     }
 
     std::cout << "VoxelRenderer initialized. GPU meshing: " << (_useGPUMeshing ? "ON" : "OFF") << std::endl;
