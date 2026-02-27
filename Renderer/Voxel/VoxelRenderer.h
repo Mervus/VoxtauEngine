@@ -47,6 +47,7 @@ public:
     void SetFrustumCullingEnabled(bool enabled) { _frustumCullingEnabled = enabled; }
     void SetBlockTextureArray(TextureArray* array) { _blockTextures = array; }
     void SetChunkManager(ChunkManager* cm) { _chunkManager = cm; }
+    void SetBlockRegistry(BlockRegistry* br) { _blockRegistry = br; }
     [[nodiscard]] TextureArray* GetBlockTextureArray() const { return _blockTextures; }
     [[nodiscard]] BlockRegistry* GetBlockRegistry() const { return _blockRegistry; }
 private:

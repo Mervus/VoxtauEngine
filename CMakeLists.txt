@@ -49,6 +49,25 @@ add_library(EngineCore STATIC
 
         # Resources (data only)
         Resources/BlockRegistry.cpp
+        Core/Network/Transport/INetworkTransport.h
+        Core/Network/NetContext.cpp
+        Core/Network/NetContext.h
+        Core/Network/Server/ServerInstance.cpp
+        Core/Network/Server/ServerInstance.h
+        Core/Network/Client/ClientSession.cpp
+        Core/Network/Client/ClientSession.h
+        Core/Network/Transport/LocalTransport.cpp
+        Core/Network/Transport/LocalTransport.h
+        Core/Network/Protocol/InputButton.h
+        Core/Network/Protocol/ServerSnapshot.h
+        Core/Network/Server/ClientProxy.h
+        Core/Network/Protocol/PlayerInputState.h
+        Core/Network/Protocol/PacketTypes.h
+        Core/Network/Replication/EntityReplicator.cpp
+        Core/Network/Replication/EntityReplicator.h
+        Core/Network/Client/EntityInterpolator.cpp
+        Core/Network/Client/EntityInterpolator.h
+        Core/World/IWorldGenerator.h
 )
 
 target_include_directories(EngineCore
@@ -60,6 +79,7 @@ target_include_directories(EngineCore
 target_compile_definitions(EngineCore
         PUBLIC
         NOMINMAX
+        ENGINE_EXPORTS
 )
 
 target_link_libraries(EngineCore
@@ -126,8 +146,6 @@ if(NOT VOXTAU_SERVER_ONLY)
 
     # Engine library — create it THEN link to it
     add_library(Engine STATIC
-            Engine.cpp
-
             # Application + Input
             Core/Application.cpp
             Core/Input/InputManager.cpp
