@@ -7,7 +7,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
 
 FetchContent_Declare(nlohmann_json GIT_REPOSITORY https://github.com/nlohmann/json.git GIT_TAG v3.11.3)
+FetchContent_Declare(enet GIT_REPOSITORY https://github.com/lsalzman/enet.git GIT_TAG v1.3.18)
 FetchContent_MakeAvailable(nlohmann_json)
+FetchContent_MakeAvailable(enet)
+target_include_directories(enet PUBLIC ${enet_SOURCE_DIR}/include)
 
 # EngineCore (cross-platform, no GPU)
 # This MUST come first since Engine depends on it
@@ -68,6 +71,8 @@ add_library(EngineCore STATIC
         Core/Network/Client/EntityInterpolator.cpp
         Core/Network/Client/EntityInterpolator.h
         Core/World/IWorldGenerator.h
+        Core/Network/Transport/ENetTransport.cpp
+        Core/Network/Transport/ENetTransport.h
 )
 
 target_include_directories(EngineCore
@@ -85,7 +90,12 @@ target_compile_definitions(EngineCore
 target_link_libraries(EngineCore
         PUBLIC
         nlohmann_json::nlohmann_json
+        enet
 )
+
+if(WIN32)
+    target_link_libraries(EngineCore PRIVATE ws2_32 winmm)
+endif()
 
 target_compile_features(EngineCore PUBLIC cxx_std_20)
 

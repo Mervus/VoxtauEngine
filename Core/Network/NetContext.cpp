@@ -5,14 +5,15 @@
 #include "NetContext.h"
 #include "Server/ServerInstance.h"
 #include "Client/ClientSession.h"
+#include "Transport/ENetTransport.h"
 #include "Transport/LocalTransport.h"
 
-NetContext::NetContext()
-{
-}
+NetContext::NetContext() = default;
 
 NetContext::~NetContext()
-= default;
+{
+    Shutdown();
+};
 
 void NetContext::StartStandalone(const ServerConfig& config)
 {
@@ -43,6 +44,53 @@ void NetContext::StartStandalone(const ServerConfig& config)
     _localTransportClient->Connect("local", 0);
     // Process the connection event so the player entity exists immediately
     _server->Tick(0.0f);
+    std::cout << "[NetContext] Started Standalone" << std::endl;
+}
+
+void NetContext::StartListenServer(const ServerConfig& config)
+{
+    _mode = NetMode::ListenServer;
+
+    // Create server
+    _server = std::make_unique<ServerInstance>();
+    _server->Initialize(config);
+
+    // ENet transport for remote players (server listens on port)
+    _networkTransport = std::make_unique<ENetTransport>();
+    _networkTransport->Initialize(config.port, config.maxClients);
+    _server->AddTransport(_networkTransport.get());
+
+    // Local transport for the host player (zero latency)
+    auto [serverSide, clientSide] = LocalTransport::CreatePair();
+    _server->AddTransport(serverSide.get());
+    _localTransportServer = std::move(serverSide);
+    _localTransportClient = std::move(clientSide);
+
+    // Host's client session
+    _client = std::make_unique<ClientSession>();
+    _client->Initialize(_localTransportClient.get());
+
+    // Connect host locally
+    _localTransportClient->Connect("local", 0);
+
+    // Process the connection
+    _server->Tick(0.0f);
+
+    std::cout << "[NetContext] Started Listen Server on port " << config.port << std::endl;
+}
+
+void NetContext::ConnectToServer(const std::string& address, uint16_t port)
+{
+    _mode = NetMode::Client;
+
+    _networkTransport = std::make_unique<ENetTransport>();
+    _networkTransport->Initialize(0, 1);
+
+    _client = std::make_unique<ClientSession>();
+    _client->Initialize(_networkTransport.get());
+
+    //_networkTransport->Connect(address, port);
+    _client->Connect(address, port);
 }
 
 void NetContext::Shutdown()
