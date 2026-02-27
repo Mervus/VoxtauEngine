@@ -25,7 +25,7 @@ class EntityInterpolator;
 
 class ClientSession
 {
-    public:
+public:
     ClientSession();
     ~ClientSession();
 
@@ -77,6 +77,11 @@ class ClientSession
     float GetRTT() const;
     bool IsConnected() const { return _connected; }
 
+    // Query for the scene's loading state
+    bool HasReceivedSpawn() const { return _hasReceivedSpawn; }
+    uint32_t GetChunksReceived() const { return _chunksReceived; }
+    Math::Vector3 GetSpawnPosition() const { return _spawnPosition; }
+    ChunkManager* GetLocalChunkManager() { return _localChunkManager.get(); }
 private:
     INetworkTransport* _transport = nullptr;  // not owned
 
@@ -104,14 +109,20 @@ private:
     Math::Vector3 _visualPosition;
     Math::Vector3 _simulationPosition;
 
-    //  Remote entity interpolation 
+    // Remote entity interpolation
     std::unique_ptr<EntityInterpolator> _interpolator;
 
-    //  Connection state 
+    // Connection state
     EntityID _localPlayerEntity;
     uint32_t _currentTick = 0;
     uint32_t _lastAckedServerTick = 0;
     bool _connected = false;
+
+    // For remote client loading state
+    std::unique_ptr<ChunkManager> _localChunkManager;  // owned, client-side chunk cache
+    Math::Vector3 _spawnPosition;
+    uint32_t _chunksReceived = 0;
+    bool _hasReceivedSpawn = false;
 
     //  Internal 
     void ProcessServerSnapshots();

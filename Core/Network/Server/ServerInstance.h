@@ -44,7 +44,6 @@ class ServerInstance
     ~ServerInstance();
 
     //  Lifecycle 
-
     // Initialize all simulation systems
     void Initialize(const ServerConfig& config);
 

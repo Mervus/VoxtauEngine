@@ -22,10 +22,12 @@ class ChunkManager;
 
 class Scene {
 protected:
+    enum class SceneState { Connecting, Loading, InGame };
     std::string name;
     Camera* mainCamera;
     bool isActive;
     bool isInitialized;
+    SceneState _sceneState = SceneState::Connecting;
 
     // Core systems (references, not owned by scene)
     IRendererApi* renderer;
@@ -50,15 +52,15 @@ public:
 
     // Camera management
     void SetMainCamera(Camera* camera);
-    Camera* GetMainCamera() const;
+    [[nodiscard]] Camera* GetMainCamera() const;
 
     // System references (set by SceneManager)
     void SetSystems(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* input);
 
     // State
-    bool IsActive() const { return isActive; }
-    bool IsInitialized() const { return isInitialized; }
-    const std::string& GetName() const { return name; }
+    [[nodiscard]] bool IsActive() const { return isActive; }
+    [[nodiscard]] bool IsInitialized() const { return isInitialized; }
+    [[nodiscard]] const std::string& GetName() const { return name; }
 
     // Internal use by SceneManager
     void Initialize();

@@ -16,6 +16,8 @@
 #include <iostream>
 
 #include "Core/Network/Protocol/InputButton.h"
+#include "Core/Network/Protocol/PacketSerializer.h"
+#include "Core/Voxel/ChunkManager.h"
 
 // How aggressively the visual position chases the simulation position.
 // 0.1 = smooth (10% per frame), 1.0 = instant snap.
@@ -47,6 +49,8 @@ void ClientSession::Initialize(INetworkTransport* transport) {
     _predictionPhysics = std::make_unique<VoxelPhysics>();
 
     _interpolator = std::make_unique<EntityInterpolator>();
+
+    _localChunkManager = std::make_unique<ChunkManager>();
 
     // Zero out input history
     std::memset(_inputHistory, 0, sizeof(_inputHistory));
@@ -191,19 +195,52 @@ void ClientSession::ProcessServerSnapshots() {
             switch (type) {
 
             case PacketType::Snapshot: {
-                // TODO: deserialize from event.data into ServerSnapshot
-                // For now with LocalTransport, we'll need a shared struct approach
-                // or proper serialization. Placeholder:
-                //
-                // ServerSnapshot snapshot;
-                // DeserializeSnapshot(event.data, snapshot);
-                // Reconcile(snapshot);
-                //
-                // Also feed remote entity states to interpolator:
-                // for (auto& entityState : snapshot.entities) {
-                //     _interpolator->PushState(entityState.id, entityState);
-                // }
-                break;
+                    ServerSnapshot snapshot;
+                    if (PacketSerializer::DeserializeSnapshot(event.data, snapshot)) {
+                        Reconcile(snapshot);
+                        float timestamp = static_cast<float>(snapshot.serverTick) / 60.0f;
+                        for (const auto& e : snapshot.entities) {
+                            _interpolator->PushState(e.id, timestamp, e);
+                        }
+                    }
+                    break;
+            }
+
+            case PacketType::ChunkData: {
+                    PacketSerializer::ChunkPacketData chunkData;
+                    if (PacketSerializer::DeserializeChunk(event.data, chunkData)) {
+                        if (!chunkData.isEmpty && _localChunkManager) {
+                            Chunk* chunk = new Chunk(Math::Vector3(chunkData.chunkX, chunkData.chunkY, chunkData.chunkZ));
+                            for (uint32_t y = 0; y < Chunk::CHUNK_SIZE; y++)
+                                for (uint32_t z = 0; z < Chunk::CHUNK_SIZE; z++)
+                                    for (uint32_t x = 0; x < Chunk::CHUNK_SIZE; x++)
+                                        chunk->SetBlock(x, y, z, chunkData.blocks[x + z * Chunk::CHUNK_SIZE + y * Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE]);
+                            _localChunkManager->AddChunk(chunk->GetWorldPosition(), chunk);
+                        }
+                        _chunksReceived++;
+                    }
+                    break;
+            }
+
+            case PacketType::PlayerSpawn: {
+                    // Server telling us which entity is our player
+                    if (event.data.size() >= 1 + sizeof(EntityID) + sizeof(Math::Vector3)) {
+                        size_t offset = 1;
+                        std::memcpy(&_localPlayerEntity, event.data.data() + offset, sizeof(EntityID));
+                        offset += sizeof(EntityID);
+
+                        Math::Vector3 spawnPos;
+                        std::memcpy(&spawnPos, event.data.data() + offset, sizeof(Math::Vector3));
+
+                        _spawnPosition = spawnPos;
+                        _hasReceivedSpawn = true;
+
+                        std::cout << "[Client] Assigned player entity "
+                                  << _localPlayerEntity.Get() << " at ("
+                                  << spawnPos.x << ", " << spawnPos.y << ", "
+                                  << spawnPos.z << ")" << std::endl;
+                    }
+                    break;
             }
 
             case PacketType::EntitySpawn: {
@@ -212,7 +249,12 @@ void ClientSession::ProcessServerSnapshots() {
             }
 
             case PacketType::EntityDespawn: {
-                // TODO: entity left AOI, remove from interpolator
+                // Entity left our AOI
+                if (_interpolator && event.data.size() >= 1 + sizeof(EntityID)) {
+                    EntityID id;
+                    std::memcpy(&id, event.data.data() + 1, sizeof(EntityID));
+                    _interpolator->RemoveEntity(id);
+                }
                 break;
             }
 
@@ -229,29 +271,14 @@ void ClientSession::ProcessServerSnapshots() {
 void ClientSession::SendInput() {
     if (!_transport || !_connected) return;
 
-    uint32_t index = _currentTick % INPUT_BUFFER_SIZE;
-    const PlayerInputState& input = _inputHistory[index];
-
-    // Packet layout: [PacketType(1)] [inputCount(1)] [PlayerInputState * N]
-    // Send current + previous 2 inputs for redundancy (handles packet loss)
-    constexpr uint8_t REDUNDANT_INPUTS = 3;
-    uint8_t inputCount = static_cast<uint8_t>(
-        std::min(static_cast<uint32_t>(REDUNDANT_INPUTS), _currentTick + 1));
-
-    std::vector<uint8_t> packet;
-    packet.reserve(2 + sizeof(PlayerInputState) * inputCount);
-    packet.push_back(static_cast<uint8_t>(PacketType::ClientInput));
-    packet.push_back(inputCount);
-
-    // Oldest first so server can process in order
-    for (int i = inputCount - 1; i >= 0; i--) {
-        uint32_t tick = _currentTick - i;
-        uint32_t idx = tick % INPUT_BUFFER_SIZE;
-        const auto* src = reinterpret_cast<const uint8_t*>(&_inputHistory[idx]);
-        packet.insert(packet.end(), src, src + sizeof(PlayerInputState));
+    PlayerInputState inputs[3];
+    for (int i = 0; i < 3; i++) {
+        uint32_t idx = (_currentTick - i) % INPUT_BUFFER_SIZE;
+        inputs[2 - i] = _inputHistory[idx]; // oldest first
     }
 
-    _transport->SendPacket(1, packet, 0, SendMode::UnreliableSequenced);
+    auto packetData = PacketSerializer::SerializeInputs(inputs, 3);
+    _transport->SendPacket(1, packetData, 0, SendMode::UnreliableSequenced);
 }
 
 //  Internal: Prediction 
@@ -334,6 +361,11 @@ void ClientSession::Reconcile(const ServerSnapshot& snapshot) {
 
     // Replay all inputs from (serverTick + 1) through (_currentTick - 1)
     // These are inputs the server hasn't processed yet
+    if (serverTick + 1 >= _currentTick) {
+        _simulationPosition = body->position;
+        _lastAckedServerTick = serverTick;
+        return;
+    }
     for (uint32_t tick = serverTick + 1; tick < _currentTick; tick++) {
         uint32_t replayIndex = tick % INPUT_BUFFER_SIZE;
         const PlayerInputState& input = _inputHistory[replayIndex];

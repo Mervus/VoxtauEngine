@@ -73,6 +73,7 @@ add_library(EngineCore STATIC
         Core/World/IWorldGenerator.h
         Core/Network/Transport/ENetTransport.cpp
         Core/Network/Transport/ENetTransport.h
+        Core/Network/Protocol/PacketSerializer.h
 )
 
 target_include_directories(EngineCore

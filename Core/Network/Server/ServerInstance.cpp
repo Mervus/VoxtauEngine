@@ -19,6 +19,7 @@
 #include <cstring>
 
 #include "Core/Network/Protocol/InputButton.h"
+#include "Core/Network/Protocol/PacketSerializer.h"
 #include "Core/World/IWorldGenerator.h"
 
 //  Lifecycle 
@@ -223,18 +224,45 @@ void ServerInstance::ProcessIncomingPackets() {
                 break;
 
             case NetworkEvent::Type::DataReceived:
-                // Route packet to the correct client proxy
-                {
-                    // Find which of our clients this connection belongs to
-                    // For LocalTransport, connection ID maps directly
-                    // For real network, we need a transport+conn → ConnectionID lookup
-                    // For now: iterate (fine for ≤32 clients)
-                    for (auto& [connId, proxy] : _clients) {
-                        if (proxy->transport == transport) {
-                            proxy->EnqueuePacket(event.data);
-                            break;
-                        }
+                if (event.data.empty()) break;
+                // Find the client proxy for this transport
+                ClientProxy* proxy = nullptr;
+                for (auto& [connId, p] : _clients) {
+                    if (p->transport == transport) {
+                        proxy = p.get();
+                        break;
                     }
+                }
+                if (!proxy) break;
+
+                // Parse packet by type
+                PacketType type = static_cast<PacketType>(event.data[0]);
+                switch (type) {
+
+                case PacketType::ClientInput: {
+                        std::vector<PlayerInputState> inputs;
+                        if (PacketSerializer::DeserializeInputs(event.data, inputs)) {
+                            for (const auto& input : inputs) {
+                                if (input.tick > proxy->lastProcessedInputTick) {
+                                    proxy->EnqueueInput(input);
+                                }
+                            }
+                        }
+                        break;
+                }
+
+                case PacketType::BlockChangeRequest: {
+                        // TODO: deserialize and validate
+                        break;
+                }
+
+                case PacketType::ClientReady: {
+                        proxy->state = ClientProxy::State::InGame;
+                        break;
+                }
+
+                default:
+                    break;
                 }
                 break;
             }
@@ -392,21 +420,36 @@ void ServerInstance::ReplicateState() {
         });
 
         // Serialize and send
-        // TODO: actual serialization + delta compression
-        // For now with LocalTransport, we could pass the struct directly
-        // but we should serialize to practice the real path
-
-        // proxy->transport->SendPacket(connId, serializedData, Channel::Snapshot, SendMode::Unreliable);
+        // TODO: actual delta compression
+        auto packetData = PacketSerializer::SerializeSnapshot(snapshot);
+        proxy->transport->SendPacket(connId, packetData, 0, SendMode::Unreliable);
     }
 }
 
 //  Internal: Chunk Streaming 
 
 void ServerInstance::StreamChunks() {
-    // TODO: For each client, check if they need new chunks based on their
-    // player position. Send chunk data for chunks they don't have yet.
+    // TODO: For each client, check if they need new chunks based on their player position. Send chunk data for chunks they don't have yet.
     // Priority: closest chunks first.
-    //
+
+    ChunkManager* chunkManager = _chunkManager.get();
+
+    for (auto& [connId, proxy] : _clients)
+    {
+        if (proxy->state != ClientProxy::State::InGame) continue;
+
+        EntityID playerId = GetPlayerEntity(connId);
+        PlayerEntity* player = GetEntityManager()->GetEntityAs<PlayerEntity>(playerId);
+        if (!player) continue;
+
+        Chunk* chunk = chunkManager->GetChunk(player->GetPosition());
+        if (!chunk) continue;
+
+        auto packetData = PacketSerializer::SerializeChunk(chunk);
+        proxy->transport->SendPacket(connId, packetData, 1, SendMode::ReliableOrdered);
+    }
+
+
     // For singleplayer with LocalTransport, the client can read directly
     // from the server's ChunkManager (optimization — skip serialization).
 }

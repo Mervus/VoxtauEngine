@@ -25,6 +25,7 @@ enum class PacketType : uint8_t {
     BlockChangeNotify   = 0x14,  // Another player changed a block near you (reliable)
     ChunkData           = 0x15,  // Chunk voxel data for streaming (reliable ordered)
     ChatBroadcast       = 0x16,  // Chat from another player (reliable)
+    PlayerSpawn         = 0x17,
 
     // Bidirectional
     Ping                = 0xF0,  // RTT measurement
