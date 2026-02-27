@@ -11,7 +11,7 @@
 #include "Entity.h"
 #include "EntityID.h"
 
-class ENGINE_API EntityManager
+class EntityManager
 {
 private:
     std::unordered_map<EntityID, std::unique_ptr<Entity>> _entities;

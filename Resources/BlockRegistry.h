@@ -47,7 +47,7 @@ struct BlockDefinition {
     }
 };
 
-class ENGINE_API BlockRegistry {
+class BlockRegistry {
 public:
     BlockRegistry();
     ~BlockRegistry();

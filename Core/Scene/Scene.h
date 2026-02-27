@@ -20,7 +20,7 @@ class ShaderCollection;
 class ResourceManager;
 class ChunkManager;
 
-class ENGINE_API Scene {
+class Scene {
 protected:
     std::string name;
     Camera* mainCamera;

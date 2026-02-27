@@ -17,7 +17,7 @@ class IRendererApi;
 class ShaderCollection;
 class ResourceManager;
 
-class ENGINE_API SceneManager {
+class SceneManager {
 private:
     std::map<std::string, Scene*> scenes;
     Scene* currentScene;

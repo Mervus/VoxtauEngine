@@ -33,7 +33,7 @@ struct VertexLayoutElement {
     uint32_t offset;
 };
 
-class ENGINE_API Mesh {
+class Mesh {
 protected:
     std::string name;
 

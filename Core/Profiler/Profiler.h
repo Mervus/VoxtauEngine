@@ -32,7 +32,7 @@ struct ProfileEntry {
     int historyIndex = 0;
 };
 
-class ENGINE_API Profiler {
+class Profiler {
 public:
     static Profiler& Instance();
 
@@ -66,7 +66,7 @@ private:
 };
 
 // RAII scope timer
-class ENGINE_API ProfileScope {
+class ProfileScope {
 public:
     explicit ProfileScope(const char* name);
     ~ProfileScope();

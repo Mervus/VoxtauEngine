@@ -14,7 +14,7 @@
 namespace Math {
 
 // Axis-Aligned Bounding Box
-struct ENGINE_API AABB {
+struct AABB {
     Vector3 min;
     Vector3 max;
 
@@ -25,7 +25,7 @@ struct ENGINE_API AABB {
     Vector3 GetExtents() const { return (max - min) * 0.5f; }
 };
 
-class ENGINE_API Frustum {
+class Frustum {
 public:
     enum Plane {
         Left = 0,

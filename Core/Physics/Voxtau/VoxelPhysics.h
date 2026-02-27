@@ -35,13 +35,13 @@ class ChunkManager;
 // can provide its own world data source.
 using VoxelSolidQuery = std::function<bool(int, int, int)>;
 
-struct ENGINE_API VoxelPhysicsConfig {
+struct VoxelPhysicsConfig {
     float fixedTimestep = 1.0f / 60.0f;    // 60 Hz
     int   maxStepsPerFrame = 4;             // Prevent spiral of death
     float defaultGravity = -20.0f;
 };
 
-class ENGINE_API VoxelPhysics {
+class VoxelPhysics {
 public:
     VoxelPhysics();
     ~VoxelPhysics();

@@ -23,7 +23,7 @@ class VoxelRenderer;
 class SkyRenderer;
 
 // Simple Perlin noise terrain generator for the demo
-class ENGINE_API DemoTerrainGenerator : public IChunkGenerator {
+class DemoTerrainGenerator : public IChunkGenerator {
 public:
     DemoTerrainGenerator();
     explicit DemoTerrainGenerator(uint32_t seed);

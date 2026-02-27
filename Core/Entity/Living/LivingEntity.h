@@ -8,7 +8,7 @@
 #include <EngineApi.h>
 #include "Core/Entity/Entity.h"
 
-class ENGINE_API LivingEntity : public Entity {
+class LivingEntity : public Entity {
 private:
     float _currentHealth;
     float _currentMana;

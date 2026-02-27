@@ -10,7 +10,7 @@
 #include "Core/Math/Vector3.h"
 #include <EngineApi.h>
 
-class ENGINE_API Camera {
+class Camera {
 private:
     Math::Vector3 position;
     Math::Vector3 forward;

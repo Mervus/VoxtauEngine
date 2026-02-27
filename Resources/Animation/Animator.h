@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <memory>
 
-class ENGINE_API Animator {
+class Animator {
 public:
     Animator();
     ~Animator() = default;

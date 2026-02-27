@@ -16,7 +16,7 @@ class IRendererApi;
 class Skeleton;
 class AnimationClip;
 
-struct ENGINE_API ModelData
+struct ModelData
 {
     Mesh* mesh = nullptr;
     Texture* texture = nullptr;
@@ -25,7 +25,7 @@ struct ENGINE_API ModelData
     std::vector<std::shared_ptr<AnimationClip>> animations;
 };
 
-class ENGINE_API ResourceManager
+class ResourceManager
 {
 public:
     ResourceManager(IRendererApi* renderer, ShaderCollection* shaderCollection);

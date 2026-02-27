@@ -9,7 +9,7 @@
 #include "MathTypes.h"
 
 namespace Math {
-    class ENGINE_API Vector3 {
+    class Vector3 {
     public:
         float x, y, z;
 

@@ -8,7 +8,7 @@
 #include "EngineApi.h"
 #include "VoxelType.h"
 
-class ENGINE_API Block : public Voxel
+class Block : public Voxel
 {
 public:
     Block(VoxelType _block_type);

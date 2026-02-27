@@ -37,7 +37,7 @@ struct GpuBuffer {
     uint32_t elementCount = 0;
 };
 
-class ENGINE_API DirectX11Renderer : public IRendererApi
+class DirectX11Renderer : public IRendererApi
 {
     private:
     // CORE D3D11 OBJECTS

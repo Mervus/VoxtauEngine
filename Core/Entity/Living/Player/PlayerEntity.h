@@ -18,7 +18,7 @@ enum class MovementState : uint8_t {
     Swimming
 };
 
-class ENGINE_API PlayerEntity : public LivingEntity {
+class PlayerEntity : public LivingEntity {
 protected:
     // Movement
     MovementState _movementState = MovementState::Falling;

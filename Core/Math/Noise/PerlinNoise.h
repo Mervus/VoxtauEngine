@@ -9,7 +9,7 @@
 #include <vector>
 #include <cstdint>
 
-class ENGINE_API PerlinNoise
+class PerlinNoise
 {
 private:
     std::vector<int> m_permutation;

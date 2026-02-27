@@ -29,7 +29,7 @@ struct Bone {
     Math::Matrix4x4  inverseBindPose;
 };
 
-class ENGINE_API Skeleton {
+class Skeleton {
 public:
     Skeleton() = default;
     ~Skeleton() = default;

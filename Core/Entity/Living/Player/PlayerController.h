@@ -15,7 +15,7 @@ class EntityManager;
 class PlayerEntity;
 class Camera;
 
-class ENGINE_API PlayerController {
+class PlayerController {
 protected:
     EntityManager* _entityManager;
     InputManager* _inputManager;

@@ -12,7 +12,7 @@
 
 class IRendererApi;
 
-class ENGINE_API ShaderCollection
+class ShaderCollection
 {
 private:
     IRendererApi* renderer;

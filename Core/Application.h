@@ -24,7 +24,7 @@
 
 class VoxelShadowSystem;
 
-class ENGINE_API Application
+class Application
 {
 private:
     void* windowHandle;

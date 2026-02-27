@@ -29,7 +29,7 @@ struct RenderData {
     bool IsSkinned() const { return animator != nullptr; }
 };
 
-class ENGINE_API Entity
+class Entity
 {
     friend class EntityManager;
 

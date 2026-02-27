@@ -37,7 +37,7 @@ struct VoxelBodyIDHash {
 
 // --- VoxelBody ---
 
-struct ENGINE_API VoxelBody {
+struct VoxelBody {
     // Identity
     VoxelBodyID id;
 

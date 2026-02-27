@@ -8,7 +8,7 @@
 #include "Core/Scene/Transform.h"
 
 
-class ENGINE_API Voxel
+class Voxel
 {
 public:
     Transform transform;

@@ -12,7 +12,7 @@
 
 #include "Renderer/RenderStates.h"
 
-class ENGINE_API TextureArray {
+class TextureArray {
 protected:
     std::string name;
     std::vector<std::string> textureFilepaths;
