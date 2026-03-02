@@ -14,6 +14,7 @@
 
 ResourceManager::ResourceManager(IRendererApi* renderer, ShaderCollection* shaderCollection) : _renderer(renderer), _shaderCollection(shaderCollection)
 {
+    _blockRegistry = new BlockRegistry();
 }
 
 ModelData ResourceManager::LoadModel(const std::string& filepathModel)
@@ -67,4 +68,10 @@ ModelData ResourceManager::LoadModel(const std::string& filepathModel, const std
     }
 
     return data;
+}
+
+void ResourceManager::LoadBlockRegistry(const std::string& filepath)
+{
+    assert(_blockRegistry);
+    _blockRegistry->LoadFromFile(filepath);
 }

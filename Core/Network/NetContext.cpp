@@ -8,7 +8,11 @@
 #include "Transport/ENetTransport.h"
 #include "Transport/LocalTransport.h"
 
-NetContext::NetContext() = default;
+NetContext::NetContext()
+{
+    // Create the client session
+    _client = std::make_unique<ClientSession>();
+};
 
 NetContext::~NetContext()
 {
@@ -36,8 +40,6 @@ void NetContext::StartStandalone(const ServerConfig& config)
     _localTransportServer = std::move(serverSide);
     _localTransportClient = std::move(clientSide);
 
-    // Create the client session
-    _client = std::make_unique<ClientSession>();
     _client->Initialize(_localTransportClient.get());
 
     // Client "connects" — server sees a new connection, spawns a player
@@ -67,7 +69,7 @@ void NetContext::StartListenServer(const ServerConfig& config)
     _localTransportClient = std::move(clientSide);
 
     // Host's client session
-    _client = std::make_unique<ClientSession>();
+    //_client = std::make_unique<ClientSession>();
     _client->Initialize(_localTransportClient.get());
 
     // Connect host locally
@@ -77,6 +79,22 @@ void NetContext::StartListenServer(const ServerConfig& config)
     _server->Tick(0.0f);
 
     std::cout << "[NetContext] Started Listen Server on port " << config.port << std::endl;
+}
+
+void NetContext::StartDedicatedServer(const ServerConfig& config)
+{
+    _mode = NetMode::DedicatedServer;
+
+    _server = std::make_unique<ServerInstance>();
+    _networkTransport = std::make_unique<ENetTransport>();
+    _networkTransport->Initialize(config.port, config.maxClients);
+    _server->AddTransport(_networkTransport.get());
+    _server->Initialize(config);
+
+    // No local client needed for dedicated
+    _client->Shutdown();
+    _client.reset();
+
 }
 
 void NetContext::ConnectToServer(const std::string& address, uint16_t port)

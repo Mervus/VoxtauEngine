@@ -52,8 +52,7 @@ void ClientSession::Initialize(INetworkTransport* transport) {
 
     _interpolator = std::make_unique<EntityInterpolator>();
 
-    _ownedChunkManager = std::make_unique<ChunkManager>();
-    _localChunkManager = _ownedChunkManager.get();
+    _localChunkManager =  std::make_unique<ChunkManager>();
 
     // Zero out input history
     std::memset(_inputHistory, 0, sizeof(_inputHistory));
@@ -222,7 +221,7 @@ void ClientSession::ProcessServerSnapshots() {
                                         chunk->SetBlock(x, y, z, chunkData.blocks[x + z * Chunk::CHUNK_SIZE + y * Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE]);
 
                             _localChunkManager->AddChunk(chunk->GetWorldPosition(), chunk);
-                            _localChunkManager->GenerateChunkMesh(chunk);
+                            //_localChunkManager->GenerateChunkMesh(chunk);
                         }
                         _chunksReceived++;
                     }

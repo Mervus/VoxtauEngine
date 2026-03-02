@@ -20,12 +20,12 @@ void Update();
 void Cleanup();
 
 Application::Application(const std::string &title)
-    : windowHandle(nullptr)
-      , windowWidth(0)
-      , windowHeight(0)
-      , isRunning(false)
-      , deltaTime(0.0f)
-      , lastFrameTime(0.0f)
+    : _windowHandle(nullptr)
+      , _windowWidth(0)
+      , _windowHeight(0)
+      , _isRunning(false)
+      , _deltaTime(0.0f)
+      , _lastFrameTime(0.0f)
       , _vsync(false)
 {
     _title = title;
@@ -47,55 +47,63 @@ bool Application::Initialize() {
     }
 
     // Now get the window handle AFTER the window exists
-    this->windowHandle = glfwGetWin32Window(_window);
-    this->windowWidth = _width;
-    this->windowHeight = _height;
+    this->_windowHandle = glfwGetWin32Window(_window);
+    this->_windowWidth = _width;
+    this->_windowHeight = _height;
 
     // INITIALIZE RENDERER
-    renderer = std::make_unique<DirectX11Renderer>();
-    if (!renderer->Initialize(windowHandle, _width, _height)) {
+    _renderer = std::make_unique<DirectX11Renderer>();
+    if (!_renderer->Initialize(_windowHandle, _width, _height)) {
         std::cerr << "Failed to initialize renderer!" << std::endl;
         return false;
     }
 
-    inputManager = std::make_unique<InputManager>(_window);
+    _netContext = std::make_unique<NetContext>();
+    _inputManager = std::make_unique<InputManager>(_window);
 
     // INITIALIZE SHADERS
-    shaderCollection = std::make_unique<ShaderCollection>(renderer.get());
-    shaderCollection->Initialize();
+    _shaderCollection = std::make_unique<ShaderCollection>(_renderer.get());
+    _shaderCollection->Initialize();
 
     // INITIALIZE RESOURCE MANAGER
-    resourceManager = std::make_unique<ResourceManager>(renderer.get(), shaderCollection.get());
+    _resourceManager = std::make_unique<ResourceManager>(_renderer.get(), _shaderCollection.get());
 
     // INITIALIZE SCENE MANAGER
-    sceneManager = std::make_unique<SceneManager>(renderer.get(), shaderCollection.get(), resourceManager.get(), inputManager.get());
+    _sceneManager = std::make_unique<SceneManager>(
+                _renderer.get(),
+                _shaderCollection.get(),
+                _resourceManager.get(),
+                _inputManager.get(),
+                _netContext.get()->GetClient() //nullptr
+                );
 
-    imguiManager = std::make_unique<ImGuiManager>();
-    if (!imguiManager->Initialize(_window, renderer->GetDevice(), renderer->GetContext())) {
+
+    _imguiManager = std::make_unique<ImGuiManager>();
+    if (!_imguiManager->Initialize(_window, _renderer->GetDevice(), _renderer->GetContext())) {
         std::cerr << "Failed to initialize ImGui!" << std::endl;
         return false;
     }
 
-    sceneHierarchyWindow = std::make_unique<SceneHierarchyWindow>();
-    performanceWindow = std::make_unique<PerformanceWindow>();
-    profilerWindow = std::make_unique<ProfilerWindow>();
-    compassWindow = std::make_unique<CompassWindow>();
+    _sceneHierarchyWindow = std::make_unique<SceneHierarchyWindow>();
+    _performanceWindow = std::make_unique<PerformanceWindow>();
+    _profilerWindow = std::make_unique<ProfilerWindow>();
+    _compassWindow = std::make_unique<CompassWindow>();
 
     // Bind scene hierarchy update to scene loading
-    sceneManager->SetOnSceneLoaded([this](Scene* scene) {
-        sceneHierarchyWindow->SetScene(scene);
-        sceneHierarchyWindow->SetOpen(true);
+    _sceneManager->SetOnSceneLoaded([this](Scene* scene) {
+        _sceneHierarchyWindow->SetScene(scene);
+        _sceneHierarchyWindow->SetOpen(true);
     });
 
 
     std::cout << "Application initialized successfully!" << std::endl;
-    isRunning = true;
+    _isRunning = true;
     return true;
 }
 
 void Application::Run()
 {
-    if (!isRunning)
+    if (!_isRunning)
     {
         if (!Initialize())
         {
@@ -107,7 +115,7 @@ void Application::Run()
     {
         glfwPollEvents();
 
-        renderer->BeginFrame();
+        _renderer->BeginFrame();
         Update();                            // Game logic + draw calls
         Application::Render();
     }
@@ -121,26 +129,29 @@ void Application::Update()
     _currentTime = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double, std::milli> timeSpan = (_currentTime - oldTime);
-    deltaTime = static_cast<float>(timeSpan.count() / 1000.0);
+    _deltaTime = static_cast<float>(timeSpan.count() / 1000.0);
 
     // Begin profiler frame
     Profiler::Instance().BeginFrame();
 
-    if (inputManager) {
-        inputManager->Update();
+    if (_inputManager) {
+        _inputManager->Update();
     }
 
     // Update current scene
-    sceneManager->Update(deltaTime);
-    performanceWindow->Update(deltaTime);
+    _sceneManager->Update(_deltaTime);
+    _performanceWindow->Update(_deltaTime);
+
+    //TODO: shouldnt it tick consistently?
+    _netContext->Tick(_deltaTime);
 
     // Update compass with camera forward direction
-    Scene* activeScene = sceneManager->GetCurrentScene();
+    Scene* activeScene = _sceneManager->GetCurrentScene();
     if (activeScene && activeScene->GetMainCamera()) {
-        compassWindow->Update(activeScene->GetMainCamera()->GetForward());
+        _compassWindow->Update(activeScene->GetMainCamera()->GetForward());
     }
 
-    sceneManager->LateUpdate(deltaTime);
+    _sceneManager->LateUpdate(_deltaTime);
 
     glfwPollEvents();
 }
@@ -153,52 +164,52 @@ void Application::Render()
     {
         PROFILE_SCOPE("Scene Render");
         // Ensure we're rendering to the backbuffer
-        renderer->SetDefaultRenderTarget();
+        _renderer->SetDefaultRenderTarget();
 
         // Clear screen
-        renderer->Clear(0.1f, 0.2f, 0.3f, 1.0f);
-        renderer->ClearDepth();
+        _renderer->Clear(0.1f, 0.2f, 0.3f, 1.0f);
+        _renderer->ClearDepth();
 
         // Set render states for scene
-        renderer->SetRasterizerMode(RasterizerMode::CullBack);
-        renderer->SetBlendMode(BlendMode::None);
-        renderer->SetDepthMode(DepthMode::Less);
-        renderer->SetDepthTestEnabled(true);
-        renderer->SetDepthWriteEnabled(true);
+        _renderer->SetRasterizerMode(RasterizerMode::CullBack);
+        _renderer->SetBlendMode(BlendMode::None);
+        _renderer->SetDepthMode(DepthMode::Less);
+        _renderer->SetDepthTestEnabled(true);
+        _renderer->SetDepthWriteEnabled(true);
 
         // Render current scene
-        sceneManager->Render(deltaTime);
+        _sceneManager->Render(_deltaTime);
     }
 
     // PASS 3: ImGui Overlay
     {
         PROFILE_SCOPE("ImGui");
-        imguiManager->BeginFrame();
-        sceneHierarchyWindow->Draw();
-        performanceWindow->Draw();
-        profilerWindow->Draw();
-        compassWindow->Draw();
-        imguiManager->EndFrame();
-        imguiManager->Render();
+        _imguiManager->BeginFrame();
+        _sceneHierarchyWindow->Draw();
+        _performanceWindow->Draw();
+        _profilerWindow->Draw();
+        _compassWindow->Draw();
+        _imguiManager->EndFrame();
+        _imguiManager->Render();
     }
 
     // Present
-    renderer->Present(_vsync);
+    _renderer->Present(_vsync);
 }
 
 void Application::Shutdown() {
     std::cout << "Shutting down Application..." << std::endl;
 
-    sceneManager.reset();
-    resourceManager.reset();
-    shaderCollection.reset();
-    imguiManager.reset();
-    sceneHierarchyWindow.reset();
-    performanceWindow.reset();
-    profilerWindow.reset();
-    compassWindow.reset();
-    inputManager.reset();
-    renderer.reset();
+    _sceneManager.reset();
+    _resourceManager.reset();
+    _shaderCollection.reset();
+    _imguiManager.reset();
+    _sceneHierarchyWindow.reset();
+    _performanceWindow.reset();
+    _profilerWindow.reset();
+    _compassWindow.reset();
+    _inputManager.reset();
+    _renderer.reset();
 
     std::cout << "Application shutdown complete." << std::endl;
 }
@@ -216,8 +227,8 @@ void Application::OnResize(int32_t width, int32_t height)
     _width = width;
     _height = height;
 
-    if (renderer) {
-        renderer->ResizeBuffers(width, height);
+    if (_renderer) {
+        _renderer->ResizeBuffers(width, height);
     }
 }
 
@@ -234,8 +245,8 @@ void Application::Cleanup()
 bool Application::InitializeCustomShaderCollection()
 {
     // Create shader collection
-    shaderCollection = std::make_unique<ShaderCollection>(renderer.get());
-    shaderCollection->Initialize(); // Loads all common shaders
+    _shaderCollection = std::make_unique<ShaderCollection>(_renderer.get());
+    _shaderCollection->Initialize(); // Loads all common shaders
 
     // Load any additional custom shaders
     // shaderCollection->LoadShader("custom_effect",

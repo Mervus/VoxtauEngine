@@ -9,6 +9,8 @@
 #include <memory>
 #include <vector>
 
+#include "BlockRegistry.h"
+
 class ShaderCollection;
 class Mesh;
 class Texture;
@@ -32,10 +34,13 @@ public:
 
     ModelData LoadModel(const std::string& filepathModel);
     ModelData LoadModel(const std::string& filepathModel, const std::string& filepathTexture);
+    void LoadBlockRegistry(const std::string& filepath);
 
 private:
     IRendererApi* _renderer = nullptr;
     ShaderCollection* _shaderCollection = nullptr;
+    BlockRegistry* _blockRegistry = nullptr;
+
 };
 
 

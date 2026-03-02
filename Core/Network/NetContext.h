@@ -67,14 +67,6 @@ class NetContext
     [[nodiscard]] ServerInstance* GetServer() { return _server.get(); }
     [[nodiscard]] ClientSession* GetClient() { return _client.get(); }
 
-    // Server-side accessors (nullptr if not a server)
-    ChunkManager* GetChunkManager();
-    VoxelPhysics* GetPhysics();
-    EntityManager* GetEntityManager();
-
-    // Client-side: the predicted local player position (for rendering)
-    Math::Vector3 GetLocalPlayerPosition() const;
-
     // Network stats
     uint32_t GetCurrentTick() const;
     float GetRTT() const;

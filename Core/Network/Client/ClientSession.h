@@ -82,9 +82,9 @@ public:
     bool HasReceivedSpawn() const { return _hasReceivedSpawn; }
     uint32_t GetChunksReceived() const { return _chunksReceived; }
     Math::Vector3 GetSpawnPosition() const { return _spawnPosition; }
-    ChunkManager* GetLocalChunkManager(){return _localChunkManager;}
-    void SetLocalChunkManager(ChunkManager* manager){_localChunkManager = manager;}
+    ChunkManager* GetLocalChunkManager(){return _localChunkManager.get(); }
     EntityManager* GetLocalEntityManager() { return _localEntityManager.get(); }
+
 private:
     INetworkTransport* _transport = nullptr;  // not owned
     ConnectionID _serverConnectionId = 0;
@@ -122,8 +122,7 @@ private:
     uint32_t _lastAckedServerTick = 0;
     bool _connected = false;
 
-    std::unique_ptr<ChunkManager> _ownedChunkManager;
-    ChunkManager* _localChunkManager = nullptr;
+    std::unique_ptr<ChunkManager> _localChunkManager;
 
     Math::Vector3 _spawnPosition;
     uint32_t _chunksReceived = 0;

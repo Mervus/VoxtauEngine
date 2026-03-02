@@ -13,6 +13,7 @@
 #include "Core/Entity/Entity.h"
 #include "Core/Input/InputManager.h"
 #include "Core/Math/Vector3.h"
+#include "Core/Network/NetContext.h"
 #include "Core/Voxel/Voxel.h"
 
 class IRendererApi;
@@ -34,6 +35,7 @@ protected:
     ShaderCollection* shaderCollection;
     ResourceManager* resourceManager;
     InputManager* inputManager;
+    ClientSession* clientSession;
 
     float _totalTime = 0.0f;
 public:
@@ -55,7 +57,7 @@ public:
     [[nodiscard]] Camera* GetMainCamera() const;
 
     // System references (set by SceneManager)
-    void SetSystems(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* input);
+    void SetSystems(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* input, ClientSession* clientSession);
 
     // State
     [[nodiscard]] bool IsActive() const { return isActive; }

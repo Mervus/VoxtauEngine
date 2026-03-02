@@ -57,7 +57,24 @@ void RenderPipeline::Initialize(int width, int height)
     _entityRenderer = new EntityRenderer(_renderer);
     _entityRenderer->Initialize();
 
+    _skyRenderer = new SkyRenderer(_renderer, _shaderCollection);
+    _skyRenderer->Initialize();
+    _skyRenderer->SetTimeOfDay(0.35f);
+    _skyRenderer->SetDaySpeed(0.0f);
+
+    _voxelRenderer = new VoxelRenderer(_renderer, _shaderCollection);
+    _voxelRenderer->Initialize(true);
+
     // Create ParticlePipeline
+
+    static std::string shaderPath = "Assets/Shaders/";
+    _shaderCollection->LoadShader("debug_line",
+        shaderPath + "Debug/debug_line.vert.hlsl",
+        shaderPath + "Debug/debug_line.pixel.hlsl");
+    _shaderCollection->LoadShader("entity",
+        shaderPath + "Entity/entity.vert.hlsl",
+        shaderPath + "Entity/en"
+                     "tity.pixel.hlsl");
 
     std::cout << "RenderPipeline initialized (" << width << "x" << height << ")" << std::endl;
 }
@@ -101,13 +118,6 @@ void RenderPipeline::SetCamera(Camera* camera)
     _camera = camera;
 }
 
-void RenderPipeline::SetVoxelWorld(ChunkManager* chunkManager,
-                                   VoxelRenderer* voxelRenderer)
-{
-    _chunkManager = chunkManager;
-    _voxelRenderer = voxelRenderer;
-}
-
 void RenderPipeline::SetDistantTerrain(DistantTerrainRenderer* distantTerrain)
 {
     _distantTerrain = distantTerrain;
@@ -115,7 +125,7 @@ void RenderPipeline::SetDistantTerrain(DistantTerrainRenderer* distantTerrain)
 
 void RenderPipeline::SetSkyRenderer(SkyRenderer* sky)
 {
-    _sky = sky;
+    _skyRenderer = sky;
 }
 
 void RenderPipeline::SetDebugRenderer(DebugLineRenderer* debug)
@@ -193,12 +203,12 @@ void RenderPipeline::UpdatePerFrameBuffer(float totalTime)
 // Render passes
 void RenderPipeline::RenderSky(float totalTime)
 {
-    if (!_sky || !_camera) return;
+    if (!_skyRenderer || !_camera) return;
 
     PROFILE_SCOPE("Sky");
 
     Math::Matrix4x4 vp = _camera->GetViewProjectionMatrix();
-    _sky->Render(vp, _camera->GetPosition(), totalTime);
+    _skyRenderer->Render(vp, _camera->GetPosition(), totalTime);
 }
 
 void RenderPipeline::RenderVoxels()

@@ -112,7 +112,6 @@ void DemoGameplayScene::OnInit()
     _voxelRenderer->Initialize(true);
     _voxelRenderer->SetChunkManager(_chunkManager);
 
-    _renderPipeline->SetVoxelWorld(_chunkManager, _voxelRenderer);
     _renderPipeline->SetSkyRenderer(_skyRenderer);
     _renderPipeline->SetDebugRenderer(_debugLineRenderer);
 
