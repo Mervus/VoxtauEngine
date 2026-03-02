@@ -5,7 +5,6 @@
 #ifndef DIRECTX11_VECTOR3_H
 #define DIRECTX11_VECTOR3_H
 #pragma once
-#include <EngineApi.h>
 #include "MathTypes.h"
 
 namespace Math {

@@ -15,6 +15,7 @@
 #include "Core/Physics/Voxtau/VoxelPhysics.h"
 
 #include "Core/Network/Protocol/PlayerInputState.h"
+#include "Core/Network/Server/ClientProxy.h"
 
 struct ServerSnapshot;
 class INetworkTransport;
@@ -81,9 +82,12 @@ public:
     bool HasReceivedSpawn() const { return _hasReceivedSpawn; }
     uint32_t GetChunksReceived() const { return _chunksReceived; }
     Math::Vector3 GetSpawnPosition() const { return _spawnPosition; }
-    ChunkManager* GetLocalChunkManager() { return _localChunkManager.get(); }
+    ChunkManager* GetLocalChunkManager(){return _localChunkManager;}
+    void SetLocalChunkManager(ChunkManager* manager){_localChunkManager = manager;}
+    EntityManager* GetLocalEntityManager() { return _localEntityManager.get(); }
 private:
     INetworkTransport* _transport = nullptr;  // not owned
+    ConnectionID _serverConnectionId = 0;
 
     // Prediction state
     // Local copy of physics for prediction only
@@ -118,11 +122,14 @@ private:
     uint32_t _lastAckedServerTick = 0;
     bool _connected = false;
 
-    // For remote client loading state
-    std::unique_ptr<ChunkManager> _localChunkManager;  // owned, client-side chunk cache
+    std::unique_ptr<ChunkManager> _ownedChunkManager;
+    ChunkManager* _localChunkManager = nullptr;
+
     Math::Vector3 _spawnPosition;
     uint32_t _chunksReceived = 0;
     bool _hasReceivedSpawn = false;
+
+    std::unique_ptr<EntityManager> _localEntityManager;
 
     //  Internal 
     void ProcessServerSnapshots();

@@ -356,6 +356,8 @@ public:
 
         return true;
     }
+
+
 };
 
 #endif //VOXTAU_PACKETSERIALIZER_H

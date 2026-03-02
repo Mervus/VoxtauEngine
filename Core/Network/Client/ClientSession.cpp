@@ -10,11 +10,13 @@
 #include "Core/Network/Protocol/ServerSnapshot.h"
 #include "Core/Physics/Voxtau/VoxelPhysics.h"
 #include "Core/Physics/Voxtau/VoxelBody.h"
+#include "Core/Entity/EntityManager.h"
 
 #include <cmath>
 #include <cstring>
 #include <iostream>
 
+#include "Core/Entity/Living/Player/PlayerEntity.h"
 #include "Core/Network/Protocol/InputButton.h"
 #include "Core/Network/Protocol/PacketSerializer.h"
 #include "Core/Voxel/ChunkManager.h"
@@ -50,7 +52,8 @@ void ClientSession::Initialize(INetworkTransport* transport) {
 
     _interpolator = std::make_unique<EntityInterpolator>();
 
-    _localChunkManager = std::make_unique<ChunkManager>();
+    _ownedChunkManager = std::make_unique<ChunkManager>();
+    _localChunkManager = _ownedChunkManager.get();
 
     // Zero out input history
     std::memset(_inputHistory, 0, sizeof(_inputHistory));
@@ -180,6 +183,7 @@ void ClientSession::ProcessServerSnapshots() {
 
         case NetworkEvent::Type::Connected:
             _connected = true;
+            _serverConnectionId = event.connection;
             std::cout << "[Client] Connected to server" << std::endl;
             break;
 
@@ -209,13 +213,16 @@ void ClientSession::ProcessServerSnapshots() {
             case PacketType::ChunkData: {
                     PacketSerializer::ChunkPacketData chunkData;
                     if (PacketSerializer::DeserializeChunk(event.data, chunkData)) {
+                        // TODO: cant we serialize blocks and copy it to memory space of new chunk?
                         if (!chunkData.isEmpty && _localChunkManager) {
                             Chunk* chunk = new Chunk(Math::Vector3(chunkData.chunkX, chunkData.chunkY, chunkData.chunkZ));
                             for (uint32_t y = 0; y < Chunk::CHUNK_SIZE; y++)
                                 for (uint32_t z = 0; z < Chunk::CHUNK_SIZE; z++)
                                     for (uint32_t x = 0; x < Chunk::CHUNK_SIZE; x++)
                                         chunk->SetBlock(x, y, z, chunkData.blocks[x + z * Chunk::CHUNK_SIZE + y * Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE]);
+
                             _localChunkManager->AddChunk(chunk->GetWorldPosition(), chunk);
+                            _localChunkManager->GenerateChunkMesh(chunk);
                         }
                         _chunksReceived++;
                     }
@@ -223,22 +230,25 @@ void ClientSession::ProcessServerSnapshots() {
             }
 
             case PacketType::PlayerSpawn: {
+                    std::cout << "[Client] Received PlayerSpawn packet" << std::endl;
                     // Server telling us which entity is our player
-                    if (event.data.size() >= 1 + sizeof(EntityID) + sizeof(Math::Vector3)) {
-                        size_t offset = 1;
-                        std::memcpy(&_localPlayerEntity, event.data.data() + offset, sizeof(EntityID));
-                        offset += sizeof(EntityID);
+                    PacketSerializer::PlayerSpawnData spawnData;
+                    if (PacketSerializer::DeserializePlayerSpawn(event.data, spawnData))
+                    {
+                        assert(_localEntityManager.get() == nullptr);
+                        _localEntityManager = std::make_unique<EntityManager>(spawnData.playerId);
+                        EntityID playerId = _localEntityManager->CreateEntityWithID<PlayerEntity>(spawnData.playerId, "LocalPlayer");
 
-                        Math::Vector3 spawnPos;
-                        std::memcpy(&spawnPos, event.data.data() + offset, sizeof(Math::Vector3));
 
-                        _spawnPosition = spawnPos;
+                        _spawnPosition = spawnData.spawnPos;
                         _hasReceivedSpawn = true;
 
+                        SetLocalPlayerEntity(playerId);
+
                         std::cout << "[Client] Assigned player entity "
-                                  << _localPlayerEntity.Get() << " at ("
-                                  << spawnPos.x << ", " << spawnPos.y << ", "
-                                  << spawnPos.z << ")" << std::endl;
+                                    << playerId.Get() << " at ("
+                                    << _spawnPosition.x << ", " << _spawnPosition.y << ", "
+                                    << _spawnPosition.z << ")" << std::endl;
                     }
                     break;
             }
@@ -278,7 +288,7 @@ void ClientSession::SendInput() {
     }
 
     auto packetData = PacketSerializer::SerializeInputs(inputs, 3);
-    _transport->SendPacket(1, packetData, 0, SendMode::UnreliableSequenced);
+    _transport->SendPacket(_serverConnectionId, packetData, 0, SendMode::UnreliableSequenced);
 }
 
 //  Internal: Prediction 
@@ -398,11 +408,11 @@ void ClientSession::Reconcile(const ServerSnapshot& snapshot) {
     _simulationPosition = body->position;
     _lastAckedServerTick = serverTick;
 
-    float error = std::sqrt(errorSq);
-    if (error > 0.1f) {
-        std::cout << "[Client] Reconciled: error=" << error
-                  << " replayed " << (_currentTick - serverTick - 1) << " ticks" << std::endl;
-    }
+    // float error = std::sqrt(errorSq);
+    // if (error > 0.1f) {
+    //     std::cout << "[Client] Reconciled: error=" << error
+    //               << " replayed " << (_currentTick - serverTick - 1) << " ticks" << std::endl;
+    // }
 }
 
 //  Internal: Visual Smoothing 

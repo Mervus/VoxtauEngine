@@ -8,10 +8,12 @@
 
 #include <cstdint>
 #include <queue>
+#include <unordered_set>
 #include <vector>
 #include "Core/Entity/EntityID.h"
 #include "Core/Network/Protocol/PlayerInputState.h"
 #include "Core/Network/Protocol/ServerSnapshot.h"
+#include "Core/Voxel/ChunkManager.h"
 
 class INetworkTransport;
 
@@ -25,7 +27,17 @@ struct ClientProxy {
         InGame         // Fully spawned, receiving snapshots
     };
 
+    // Server's internal ID — unique across ALL transports.
+    // Used as the key in ServerInstance::_clients map.
+    // Assigned by ServerInstance::_nextConnectionId counter.
+    // Never sent to a transport — transports don't know about this.
     ConnectionID connectionId = 0;
+
+    // The ID assigned by the transport layer (LocalTransport or ENetTransport).
+    // Each transport has its own counter, so these can collide across transports
+    // (e.g. LocalTransport client=1 and ENetTransport client=1 are different).
+    // Used exclusively for transport->SendPacket() calls.
+    ConnectionID transportConnId = 0;
     INetworkTransport* transport = nullptr;
     State state = State::Connected;
 
@@ -70,6 +82,15 @@ struct ClientProxy {
 
     // Which chunks this client has received (for streaming)
     // std::unordered_set<ChunkCoord> receivedChunks;
+
+    // Tracks which chunks this client has received
+    std::unordered_set<Math::Vector3, Vector3Hash, Vector3Equal> receivedChunks;
+
+    // Chunks queued to send (sorted by priority — closest first)
+    std::vector<Math::Vector3> chunkSendQueue;
+
+    // Max chunks to send per tick (bandwidth throttle)
+    static constexpr int MAX_CHUNKS_PER_TICK = 4;
 };
 
 

@@ -158,33 +158,64 @@ void ServerInstance::Tick(float deltaTime) {
 
 //  Client Management 
 
-ConnectionID ServerInstance::OnClientConnected(INetworkTransport* transport) {
+ConnectionID ServerInstance::OnClientConnected(INetworkTransport* transport, ConnectionID transportConnId) {
     if (_clients.size() >= _config.maxClients) {
         std::cerr << "[Server] Rejecting connection — server full ("
                   << _config.maxClients << " max)" << std::endl;
         return INVALID_CONNECTION;
     }
+    std::cout << "[Server] OnClientConnected: _nextConnectionId=" << _nextConnectionId << std::endl;
 
     ConnectionID connId = _nextConnectionId++;
 
     auto proxy = std::make_unique<ClientProxy>();
     proxy->connectionId = connId;
+    proxy->transportConnId = transportConnId;
     proxy->transport = transport;
     proxy->state = ClientProxy::State::Connected;
 
     _clients[connId] = std::move(proxy);
 
-    std::cout << "[Server] Client " << connId << " connected" << std::endl;
+    std::cout << "[Server] Client " << transportConnId << " connected" << std::endl;
 
     // Spawn a player entity for this client
     EntityID playerId = SpawnPlayer(connId);
 
     // Notify game code (set spawn position, inventory, etc.)
     if (OnPlayerSpawned) {
-        OnPlayerSpawned(playerId, connId);
+        OnPlayerSpawned(playerId, transportConnId);
     }
 
-    return connId;
+    // Send PlayerSpawn packet to the client
+    auto* player = _entityManager->GetEntityAs<PlayerEntity>(playerId);
+    auto& clientProxy = _clients[connId];
+
+    auto packet = PacketSerializer::SerializePlayerSpawn(
+        playerId, player->GetPosition());
+    clientProxy->transport->SendPacket(clientProxy->transportConnId, packet, 1, SendMode::Reliable);
+
+    // // Tell the new client about all existing entities
+    // _entityManager->ForEach([&](Entity* entity) {
+    //     if (entity->GetID() == playerId) return; // skip self, already got PlayerSpawn
+    //
+    //     auto packet = PacketSerializer::SerializeEntitySpawn(
+    //         entity->GetID(), entity->GetType(), entity->GetPosition());
+    //     proxy->transport->SendPacket(
+    //         proxy->connectionId, packet, 1, SendMode::Reliable);
+    // });
+    //
+    // // Tell all existing clients about the new player
+    // for (auto& [otherConnId, otherProxy] : _clients) {
+    //     if (otherConnId == connId) continue; // skip the new client
+    //
+    //     auto packet = PacketSerializer::SerializeEntitySpawn(
+    //         playerId, EntityType::Player,
+    //         _entityManager->GetEntity(playerId)->GetPosition());
+    //     otherProxy->transport->SendPacket(
+    //         otherProxy->connectionId, packet, 1, SendMode::Reliable);
+    // }
+
+    return transportConnId;
 }
 
 void ServerInstance::OnClientDisconnected(ConnectionID id) {
@@ -216,7 +247,7 @@ void ServerInstance::ProcessIncomingPackets() {
             switch (event.type) {
 
             case NetworkEvent::Type::Connected:
-                OnClientConnected(transport);
+                OnClientConnected(transport, event.connection);
                 break;
 
             case NetworkEvent::Type::Disconnected:
@@ -422,54 +453,91 @@ void ServerInstance::ReplicateState() {
         // Serialize and send
         // TODO: actual delta compression
         auto packetData = PacketSerializer::SerializeSnapshot(snapshot);
-        proxy->transport->SendPacket(connId, packetData, 0, SendMode::Unreliable);
+        proxy->transport->SendPacket(proxy->transportConnId, packetData, 0, SendMode::Unreliable);
     }
 }
 
 //  Internal: Chunk Streaming 
 
 void ServerInstance::StreamChunks() {
-    // TODO: For each client, check if they need new chunks based on their player position. Send chunk data for chunks they don't have yet.
-    // Priority: closest chunks first.
-
-    ChunkManager* chunkManager = _chunkManager.get();
-
-    for (auto& [connId, proxy] : _clients)
-    {
+    for (auto& [connId, proxy] : _clients) {
         if (proxy->state != ClientProxy::State::InGame) continue;
 
-        EntityID playerId = GetPlayerEntity(connId);
-        PlayerEntity* player = GetEntityManager()->GetEntityAs<PlayerEntity>(playerId);
+        auto* player = _entityManager->GetEntityAs<PlayerEntity>(proxy->playerEntity);
+        assert(player);
         if (!player) continue;
 
-        Chunk* chunk = chunkManager->GetChunk(player->GetPosition());
-        if (!chunk) continue;
+        Math::Vector3 playerPos = player->GetPosition();
 
-        auto packetData = PacketSerializer::SerializeChunk(chunk);
-        proxy->transport->SendPacket(connId, packetData, 1, SendMode::ReliableOrdered);
+        // Convert player world position to chunk coordinates
+        int playerChunkX = static_cast<int>(std::floor(playerPos.x / Chunk::CHUNK_SIZE));
+        int playerChunkY = static_cast<int>(std::floor(playerPos.y / Chunk::CHUNK_SIZE));
+        int playerChunkZ = static_cast<int>(std::floor(playerPos.z / Chunk::CHUNK_SIZE));
+
+        // Rebuild send queue if empty
+        if (proxy->chunkSendQueue.empty()) {
+            for (const auto& [chunkPos, chunk] : _chunkManager->GetChunks()) {
+                // Skip if client already has this chunk
+                if (proxy->receivedChunks.count(chunkPos)) continue;
+
+                proxy->chunkSendQueue.push_back(chunkPos);
+            }
+
+            // Sort by distance to player (closest first)
+            auto playerChunk = Math::Vector3(
+                static_cast<float>(playerChunkX),
+                static_cast<float>(playerChunkY),
+                static_cast<float>(playerChunkZ));
+
+            std::sort(proxy->chunkSendQueue.begin(), proxy->chunkSendQueue.end(),
+                [&playerChunk](const Math::Vector3& a, const Math::Vector3& b) {
+                    float da = (a.x - playerChunk.x) * (a.x - playerChunk.x)
+                             + (a.y - playerChunk.y) * (a.y - playerChunk.y)
+                             + (a.z - playerChunk.z) * (a.z - playerChunk.z);
+                    float db = (b.x - playerChunk.x) * (b.x - playerChunk.x)
+                             + (b.y - playerChunk.y) * (b.y - playerChunk.y)
+                             + (b.z - playerChunk.z) * (b.z - playerChunk.z);
+                    return da < db;
+                });
+        }
+
+        // Send a few chunks per tick (don't flood the connection)
+        int sent = 0;
+        while (!proxy->chunkSendQueue.empty() && sent < ClientProxy::MAX_CHUNKS_PER_TICK) {
+            Math::Vector3 chunkPos = proxy->chunkSendQueue.front();
+            proxy->chunkSendQueue.erase(proxy->chunkSendQueue.begin());
+
+            Chunk* chunk = _chunkManager->GetChunk(chunkPos);
+            if (!chunk) continue;
+
+            auto packet = PacketSerializer::SerializeChunk(chunk);
+            proxy->transport->SendPacket(
+                proxy->transportConnId, packet, 1, SendMode::ReliableOrdered);
+
+            proxy->receivedChunks.insert(chunkPos);
+            sent++;
+        }
     }
-
-
-    // For singleplayer with LocalTransport, the client can read directly
-    // from the server's ChunkManager (optimization — skip serialization).
 }
 
 //  Internal: Player Management 
 
-EntityID ServerInstance::SpawnPlayer(ConnectionID client) {
+EntityID ServerInstance::SpawnPlayer(ConnectionID client)
+{
     auto it = _clients.find(client);
     if (it == _clients.end()) return EntityID();
 
     // Create the player entity
     EntityID playerId = _entityManager->CreateEntity<PlayerEntity>("Player_" + std::to_string(client));
-
     auto* player = _entityManager->GetEntityAs<PlayerEntity>(playerId);
+    assert(player);
     if (!player) return EntityID();
 
     // Create a physics body for this player
     // Default spawn position — game code overrides via OnPlayerSpawned callback
     Math::Vector3 spawnPos(0.0f, 80.0f, 0.0f);
     VoxelBodyID bodyId = _physics->CreateBody(spawnPos, 0.6f, 1.8f);
+    player->SetPosition(spawnPos);
     player->BindPhysics(_physics.get(), bodyId);
     player->SetRespawnPosition(spawnPos);
 

@@ -11,6 +11,8 @@
 #include <vector>
 #include <cstdint>
 #include <functional>
+#include <set>
+
 #include "Core/Entity/EntityID.h"
 #include "Core/Math/Vector3.h"
 
@@ -72,7 +74,7 @@ class ServerInstance
     //  Client management 
 
     // Called when a new client connects (transport fires this)
-    ConnectionID OnClientConnected(INetworkTransport* transport);
+    ConnectionID OnClientConnected(INetworkTransport* transport, ConnectionID transportConnId);
 
     // Called when a client disconnects
     void OnClientDisconnected(ConnectionID id);
@@ -102,7 +104,7 @@ private:
     std::unique_ptr<VoxelPhysics> _physics;
     std::unique_ptr<EntityManager> _entityManager;
 
-    //  Networking 
+    //  Networking
     std::vector<INetworkTransport*> _transports;  // not owned, just observed
     std::unique_ptr<EntityReplicator> _replicator;
     std::unordered_map<ConnectionID, std::unique_ptr<ClientProxy>> _clients;
