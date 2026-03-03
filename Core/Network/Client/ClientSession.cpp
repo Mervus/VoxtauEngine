@@ -106,28 +106,20 @@ void ClientSession::Connect(const std::string& address, uint16_t port) {
 //  Per-Tick 
 
 void ClientSession::Tick(float deltaTime) {
-    // 1. Process snapshots from server
     ProcessServerSnapshots();
-
-    // 2. Send our current input to the server
     SendInput();
-
-    // 3. Run local prediction (apply input to local physics)
     Predict();
-
-    // 4. Smooth visual position toward simulation position
-    SmoothVisualPosition(deltaTime);
 
     // 5. Push smoothed position back to the player entity (for rendering and camera)
     // TODO: Extremely laggy because ping how can we do this better.
-    if (_localEntityManager && _localPlayerEntity.IsValid()) {
-        Entity* entity = _localEntityManager->GetEntity(_localPlayerEntity);
-        if (entity) {
-            entity->SetPosition(_visualPosition);
-        }
-    }
+    // if (_localEntityManager && _localPlayerEntity.IsValid()) {
+    //     Entity* entity = _localEntityManager->GetEntity(_localPlayerEntity);
+    //     if (entity) {
+    //         entity->SetPosition(_visualPosition);
+    //     }
+    // }
 
-    // 6. Advance interpolation for remote entities
+    // Advance interpolation for remote entities
     if (_interpolator) {
         _interpolator->Update(deltaTime);
     }
@@ -140,6 +132,25 @@ void ClientSession::SetLocalInput(const PlayerInputState& input) {
     uint32_t index = _currentTick % INPUT_BUFFER_SIZE;
     _inputHistory[index] = input;
     _inputHistory[index].tick = _currentTick;
+}
+
+void ClientSession::UpdateVisualSmoothing(float deltaTime)
+{
+    float dx = _simulationPosition.x - _visualPosition.x;
+    float dy = _simulationPosition.y - _visualPosition.y;
+    float dz = _simulationPosition.z - _visualPosition.z;
+    float distSq = dx * dx + dy * dy + dz * dz;
+
+    if (distSq > SNAP_THRESHOLD * SNAP_THRESHOLD) {
+        _visualPosition = _simulationPosition;
+        return;
+    }
+
+    // Frame-rate independent smoothing
+    float t = 1.0f - std::pow(1.0f - VISUAL_SMOOTH_RATE, deltaTime * 60.0f);
+    _visualPosition.x += dx * t;
+    _visualPosition.y += dy * t;
+    _visualPosition.z += dz * t;
 }
 
 //  Rendering State 

@@ -89,19 +89,24 @@ void PlayerController::Update(float deltaTime) {
 }
 
 void PlayerController::LateUpdate(float deltaTime) {
-    if (!_camera) return;
+    if (!_camera || _debugCamera) return;
 
-    // Debug camera is already positioned by HandleDebugMovement
-    if (_debugCamera) return;
+    Math::Vector3 playerPos;
 
     PlayerEntity* player = GetPlayer();
     if (!player) return;
 
-    Math::Vector3 playerPos = player->GetPosition();
+    if (_clientSession) {
+        playerPos = _clientSession->GetLocalPlayerVisualPosition();
+    } else {
+        // Fallback for singleplayer/demo without ClientSession
+        PlayerEntity* player = GetPlayer();
+        if (!player) return;
+        playerPos = player->GetPosition();
+    }
 
     if (_thirdPerson) {
         float yawRad = _yaw * DEG_TO_RAD;
-
         Math::Vector3 offset;
         offset.x = _cameraOffset.z * std::sin(yawRad);
         offset.y = _cameraOffset.y;

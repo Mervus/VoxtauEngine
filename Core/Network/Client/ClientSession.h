@@ -57,7 +57,7 @@ public:
     // Game code sets this each frame (from PlayerController)
     void SetLocalInput(const PlayerInputState& input);
 
-    // State for rendering
+    void UpdateVisualSmoothing(float deltaTime);
 
     // Local player — predicted position (smooth, no waiting for server)
     [[nodiscard]] Math::Vector3 GetLocalPlayerPosition() const;
