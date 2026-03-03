@@ -118,7 +118,16 @@ void ClientSession::Tick(float deltaTime) {
     // 4. Smooth visual position toward simulation position
     SmoothVisualPosition(deltaTime);
 
-    // 5. Advance interpolation for remote entities
+    // 5. Push smoothed position back to the player entity (for rendering and camera)
+    // TODO: Extremely laggy because ping how can we do this better.
+    if (_localEntityManager && _localPlayerEntity.IsValid()) {
+        Entity* entity = _localEntityManager->GetEntity(_localPlayerEntity);
+        if (entity) {
+            entity->SetPosition(_visualPosition);
+        }
+    }
+
+    // 6. Advance interpolation for remote entities
     if (_interpolator) {
         _interpolator->Update(deltaTime);
     }
@@ -406,6 +415,8 @@ void ClientSession::Reconcile(const ServerSnapshot& snapshot) {
     // Update simulation position to the replayed result
     _simulationPosition = body->position;
     _lastAckedServerTick = serverTick;
+
+    //std::cout << "[Client] Position " << body->position << std::endl;
 
     // float error = std::sqrt(errorSq);
     // if (error > 0.1f) {

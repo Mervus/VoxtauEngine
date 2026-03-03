@@ -36,6 +36,7 @@ public:
     ModelData LoadModel(const std::string& filepathModel, const std::string& filepathTexture);
     void LoadBlockRegistry(const std::string& filepath);
 
+    BlockRegistry* GetBlockRegistry() const { return _blockRegistry; };
 private:
     IRendererApi* _renderer = nullptr;
     ShaderCollection* _shaderCollection = nullptr;

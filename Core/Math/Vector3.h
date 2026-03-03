@@ -5,6 +5,9 @@
 #ifndef DIRECTX11_VECTOR3_H
 #define DIRECTX11_VECTOR3_H
 #pragma once
+#include <iostream>
+#include <string>
+
 #include "MathTypes.h"
 
 namespace Math {
@@ -77,7 +80,13 @@ namespace Math {
 
 
     Vector3 operator*(float scalar, const Vector3& v);
+
+    inline std::ostream& operator<< (std::ostream& outs, const Math::Vector3& obj ) {
+        //"(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")"
+        return outs << "(" + std::to_string(obj.x) + ", " + std::to_string(obj.y) + ", " + std::to_string(obj.z) + ")";
+    }
 }
+
 
 
 #endif //DIRECTX11_VECTOR3_H

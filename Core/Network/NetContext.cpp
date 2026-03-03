@@ -76,7 +76,7 @@ void NetContext::StartListenServer(const ServerConfig& config)
     _localTransportClient->Connect("local", 0);
 
     // Process the connection
-    _server->Tick(0.0f);
+    //_server->Tick(0.0f);
 
     std::cout << "[NetContext] Started Listen Server on port " << config.port << std::endl;
 }
@@ -104,10 +104,10 @@ void NetContext::ConnectToServer(const std::string& address, uint16_t port)
     _networkTransport = std::make_unique<ENetTransport>();
     _networkTransport->Initialize(0, 1);
 
-    _client = std::make_unique<ClientSession>();
+    // Use the existing _client (created in NetContext constructor) — do NOT replace it.
+    // Application::Initialize() captures _client.get() for SceneManager; replacing
+    // _client here would leave a dangling pointer in every scene.
     _client->Initialize(_networkTransport.get());
-
-    //_networkTransport->Connect(address, port);
     _client->Connect(address, port);
 }
 

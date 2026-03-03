@@ -53,8 +53,12 @@ void ServerInstance::SetBlockRegistry(BlockRegistry* registry) {
 }
 
 void ServerInstance::GenerateWorld() {
+    assert(_chunkManager);
+    assert(_worldGenerator);
+
+    // ReSharper disable once CppDFAUnreachableCode
     if (!_chunkManager) {
-        std::cerr << "[Server] Cannot generate world — not initialized" << std::endl;
+        std::cerr << "[Server] Cannot generate world not initialized" << std::endl;
         return;
     }
 
@@ -176,7 +180,7 @@ ConnectionID ServerInstance::OnClientConnected(INetworkTransport* transport, Con
 
     _clients[connId] = std::move(proxy);
 
-    std::cout << "[Server] Client " << transportConnId << " connected" << std::endl;
+    std::cout << "[Server] Client " << connId << " connected" << std::endl;
 
     // Spawn a player entity for this client
     EntityID playerId = SpawnPlayer(connId);
@@ -476,6 +480,12 @@ void ServerInstance::StreamChunks() {
 
         // Rebuild send queue if empty
         if (proxy->chunkSendQueue.empty()) {
+            static bool s_warnedNoChunks = false;
+            if (_chunkManager->GetChunks().empty() && !s_warnedNoChunks) {
+                std::cerr << "[Server] WARNING: StreamChunks chunk manager is empty. "
+                             "Did you call GenerateWorld()?" << std::endl;
+                s_warnedNoChunks = true;
+            }
             for (const auto& [chunkPos, chunk] : _chunkManager->GetChunks()) {
                 // Skip if client already has this chunk
                 if (proxy->receivedChunks.count(chunkPos)) continue;
@@ -509,7 +519,6 @@ void ServerInstance::StreamChunks() {
 
             Chunk* chunk = _chunkManager->GetChunk(chunkPos);
             if (!chunk) continue;
-
             auto packet = PacketSerializer::SerializeChunk(chunk);
             proxy->transport->SendPacket(
                 proxy->transportConnId, packet, 1, SendMode::ReliableOrdered);
@@ -545,8 +554,8 @@ EntityID ServerInstance::SpawnPlayer(ConnectionID client)
     it->second->playerEntity = playerId;
     it->second->state = ClientProxy::State::InGame;
 
-    std::cout << "[Server] Spawned player (entity=" << playerId.Get()
-              << ") for client " << client << std::endl;
+    std::cout << "[Server] Spawned player (entity=" << playerId.Get()<< ") for client " << client <<
+          " at position: " << spawnPos << std::endl;
 
     return playerId;
 }

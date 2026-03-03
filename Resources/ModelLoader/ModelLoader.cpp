@@ -396,7 +396,7 @@ ModelLoader::LoadAnimations(const std::string& filepath,
                 matched++;
         }
         std::cout << "ModelLoader: Animation '" << clip->name
-                  << "' — " << matched << "/" << clip->channels.size()
+                  << "' - " << matched << "/" << clip->channels.size()
                   << " channels matched skeleton" << std::endl;
     }
 

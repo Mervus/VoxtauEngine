@@ -38,11 +38,11 @@ Application::~Application()
 }
 
 bool Application::Initialize() {
-    std::cout << "Initializing Application..." << std::endl;
+    std::cout << "[Client] Initializing Application..." << std::endl;
 
     // Create GLFW window FIRST
     if (!InitializeGLFW()) {
-        std::cerr << "Failed to initialize GLFW!" << std::endl;
+        std::cerr << "[Client] Failed to initialize GLFW!" << std::endl;
         return false;
     }
 
@@ -54,7 +54,7 @@ bool Application::Initialize() {
     // INITIALIZE RENDERER
     _renderer = std::make_unique<DirectX11Renderer>();
     if (!_renderer->Initialize(_windowHandle, _width, _height)) {
-        std::cerr << "Failed to initialize renderer!" << std::endl;
+        std::cerr << "[Client] Failed to initialize renderer!" << std::endl;
         return false;
     }
 
@@ -80,7 +80,7 @@ bool Application::Initialize() {
 
     _imguiManager = std::make_unique<ImGuiManager>();
     if (!_imguiManager->Initialize(_window, _renderer->GetDevice(), _renderer->GetContext())) {
-        std::cerr << "Failed to initialize ImGui!" << std::endl;
+        std::cerr << "[Client] Failed to initialize ImGui!" << std::endl;
         return false;
     }
 
@@ -96,7 +96,7 @@ bool Application::Initialize() {
     });
 
 
-    std::cout << "Application initialized successfully!" << std::endl;
+    std::cout << "[Client] Application initialized successfully!" << std::endl;
     _isRunning = true;
     return true;
 }

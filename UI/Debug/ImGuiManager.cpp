@@ -23,7 +23,7 @@ ImGuiManager::~ImGuiManager() {
 bool ImGuiManager::Initialize(void* windowHandle, ID3D11Device* device, ID3D11DeviceContext* context) {
     if (initialized) return true;
 
-    std::cout << "Initializing ImGui... \n" << std::endl;
+    std::cout << "[Client] Initializing ImGui..." << std::endl;
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -59,7 +59,6 @@ bool ImGuiManager::Initialize(void* windowHandle, ID3D11Device* device, ID3D11De
     }
 
     initialized = true;
-    std::cout << "ImGui initialized successfully!" << std::endl;
     return true;
 }
 

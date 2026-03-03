@@ -73,10 +73,9 @@ void RenderPipeline::Initialize(int width, int height)
         shaderPath + "Debug/debug_line.pixel.hlsl");
     _shaderCollection->LoadShader("entity",
         shaderPath + "Entity/entity.vert.hlsl",
-        shaderPath + "Entity/en"
-                     "tity.pixel.hlsl");
+        shaderPath + "Entity/entity.pixel.hlsl");
 
-    std::cout << "RenderPipeline initialized (" << width << "x" << height << ")" << std::endl;
+    std::cout << "[Client] RenderPipeline initialized (" << width << "x" << height << ")" << std::endl;
 }
 
 void RenderPipeline::Shutdown()
