@@ -27,6 +27,9 @@ class EntityInterpolator;
 class ClientSession
 {
 public:
+    // Events
+    std::function<void(EntityID, EntityType)> OnRemoteEntitySpawned;
+
     ClientSession();
     ~ClientSession();
 
@@ -130,7 +133,7 @@ private:
 
     std::unique_ptr<EntityManager> _localEntityManager;
 
-    //  Internal 
+    //  Internal
     void ProcessServerSnapshots();
     void SendInput();
     void Predict();

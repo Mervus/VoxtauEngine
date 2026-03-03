@@ -268,12 +268,34 @@ void ClientSession::ProcessServerSnapshots() {
                                     << playerId.Get() << " at ("
                                     << _spawnPosition.x << ", " << _spawnPosition.y << ", "
                                     << _spawnPosition.z << ")" << std::endl;
+
+
+                        std::cout << "[Client] Sending ClientReady on conn=" << _serverConnectionId << std::endl;
+
+                        std::vector<uint8_t> readyPacket = { static_cast<uint8_t>(PacketType::ClientReady) };
+                        _transport->SendPacket(_serverConnectionId, readyPacket, 1, SendMode::Reliable);
                     }
                     break;
             }
 
             case PacketType::EntitySpawn: {
-                // TODO: full entity state for new entity entering AOI
+                    std::cout << "[Client] Received EntitySpawn packet" << std::endl;
+                    PacketSerializer::EntitySpawnData entitySpawnData;
+                    if (PacketSerializer::DeserializeEntitySpawn(event.data, entitySpawnData))
+                    {
+                        assert(_localEntityManager.get() != nullptr);
+                        if (_localEntityManager && !_localEntityManager->GetEntity(entitySpawnData.id)) {
+                            _localEntityManager->CreateEntityWithID<PlayerEntity>(
+                                entitySpawnData.id, "RemotePlayer");
+                            auto* entity = _localEntityManager->GetEntity(entitySpawnData.id);
+                            if (entity) entity->SetPosition(entitySpawnData.position);
+
+                            // Notify game code so it can attach mesh/animations
+                            if (OnRemoteEntitySpawned) {
+                                OnRemoteEntitySpawned(entitySpawnData.id, entitySpawnData.type);
+                            }
+                        }
+                    }
                 break;
             }
 

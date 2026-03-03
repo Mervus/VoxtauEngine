@@ -48,6 +48,7 @@ public:
     [[nodiscard]] uint32_t GetRTT(ConnectionID conn) const override;
     [[nodiscard]] bool IsConnected(ConnectionID conn) const override;
 
+    void Flush() override;
 private:
     ENetHost* _host = nullptr;
     bool _isServer = false;

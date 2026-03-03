@@ -68,6 +68,8 @@ bool Application::Initialize() {
     // INITIALIZE RESOURCE MANAGER
     _resourceManager = std::make_unique<ResourceManager>(_renderer.get(), _shaderCollection.get());
 
+    assert(_netContext.get()->GetClient());
+
     // INITIALIZE SCENE MANAGER
     _sceneManager = std::make_unique<SceneManager>(
                 _renderer.get(),

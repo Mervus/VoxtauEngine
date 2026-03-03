@@ -35,6 +35,7 @@ public:
     [[nodiscard]] uint32_t GetRTT(ConnectionID conn) const override { return 0; }
     [[nodiscard]] bool IsConnected(ConnectionID conn) const override { return _connected; }
 
+    void Flush() override;
 private:
     LocalTransport() = default;
 

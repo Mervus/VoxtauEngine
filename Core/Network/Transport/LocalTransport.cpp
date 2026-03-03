@@ -94,6 +94,10 @@ void LocalTransport::PollEvents(std::vector<NetworkEvent>& outEvents)
     }
 }
 
+void LocalTransport::Flush()
+{
+}
+
 void LocalTransport::Enqueue(NetworkEvent event)
 {
     std::lock_guard lock(_inboxMutex);

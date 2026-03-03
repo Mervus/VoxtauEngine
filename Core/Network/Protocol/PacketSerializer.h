@@ -330,8 +330,7 @@ public:
     }
 
     // Player Spawn
-    static std::vector<uint8_t> SerializePlayerSpawn(EntityID playerId,
-                                                      const Math::Vector3& spawnPos) {
+    static std::vector<uint8_t> SerializePlayerSpawn(EntityID playerId, const Math::Vector3& spawnPos) {
         std::vector<uint8_t> buf;
         buf.reserve(20);
 
@@ -358,6 +357,34 @@ public:
     }
 
 
+    static std::vector<uint8_t>  SerializeEntitySpawn(EntityID entityId, EntityType type, const Math::Vector3& spawnPos) {
+        std::vector<uint8_t> buf;
+
+        WriteU8(buf, static_cast<uint8_t>(PacketType::EntitySpawn));
+        WriteU32(buf, entityId.Get());
+        WriteU8(buf, type);
+        WriteVec3(buf, spawnPos);
+
+        return buf;
+    }
+
+    struct EntitySpawnData
+    {
+        EntityID id;
+        EntityType type = EntityType::None;
+        Math::Vector3 position;
+    };
+
+    static bool DeserializeEntitySpawn(const std::vector<uint8_t>& data, EntitySpawnData& out) {
+        if (data.size() < 1 + 4 + 1 + 12) return false;
+
+        size_t offset = 1;
+        out.id = EntityID(ReadU32(data.data(), offset));
+        out.type     = static_cast<EntityType>(ReadU8(data.data(), offset));
+        out.position = ReadVec3(data.data(), offset);
+
+        return true;
+    }
 };
 
 #endif //VOXTAU_PACKETSERIALIZER_H

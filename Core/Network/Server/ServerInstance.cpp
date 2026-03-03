@@ -199,25 +199,25 @@ ConnectionID ServerInstance::OnClientConnected(INetworkTransport* transport, Con
     clientProxy->transport->SendPacket(clientProxy->transportConnId, packet, 1, SendMode::Reliable);
 
     // // Tell the new client about all existing entities
-    // _entityManager->ForEach([&](Entity* entity) {
-    //     if (entity->GetID() == playerId) return; // skip self, already got PlayerSpawn
-    //
-    //     auto packet = PacketSerializer::SerializeEntitySpawn(
-    //         entity->GetID(), entity->GetType(), entity->GetPosition());
-    //     proxy->transport->SendPacket(
-    //         proxy->connectionId, packet, 1, SendMode::Reliable);
-    // });
-    //
-    // // Tell all existing clients about the new player
-    // for (auto& [otherConnId, otherProxy] : _clients) {
-    //     if (otherConnId == connId) continue; // skip the new client
-    //
-    //     auto packet = PacketSerializer::SerializeEntitySpawn(
-    //         playerId, EntityType::Player,
-    //         _entityManager->GetEntity(playerId)->GetPosition());
-    //     otherProxy->transport->SendPacket(
-    //         otherProxy->connectionId, packet, 1, SendMode::Reliable);
-    // }
+    _entityManager->ForEach([&](Entity* entity) {
+        if (entity->GetID() == playerId) return;
+
+        auto packet = PacketSerializer::SerializeEntitySpawn(
+            entity->GetID(), entity->GetType(), entity->GetPosition());
+        clientProxy->transport->SendPacket(
+            clientProxy->transportConnId, packet, 1, SendMode::Reliable);
+    });
+
+    // Tell all existing clients about the new player
+    for (auto& [otherConnId, otherProxy] : _clients) {
+        if (otherConnId == connId) continue; // skip the new client
+
+        auto packet = PacketSerializer::SerializeEntitySpawn(
+            playerId, EntityType::Player,
+            _entityManager->GetEntity(playerId)->GetPosition());
+        otherProxy->transport->SendPacket(
+            otherProxy->transportConnId, packet, 1, SendMode::Reliable);
+    }
 
     return transportConnId;
 }
@@ -263,7 +263,7 @@ void ServerInstance::ProcessIncomingPackets() {
                 // Find the client proxy for this transport
                 ClientProxy* proxy = nullptr;
                 for (auto& [connId, p] : _clients) {
-                    if (p->transport == transport) {
+                    if (p->transport == transport && p->transportConnId == event.connection) {
                         proxy = p.get();
                         break;
                     }
@@ -292,6 +292,7 @@ void ServerInstance::ProcessIncomingPackets() {
                 }
 
                 case PacketType::ClientReady: {
+                        std::cout << "[Server] Client " << proxy->connectionId << " ready" << std::endl;
                         proxy->state = ClientProxy::State::InGame;
                         break;
                 }
@@ -302,6 +303,11 @@ void ServerInstance::ProcessIncomingPackets() {
                 break;
             }
         }
+    }
+
+    // Flush all transports so packets queued during event handling get sent immediately
+    for (auto* transport : _transports) {
+        transport->Flush();
     }
 }
 
@@ -465,7 +471,7 @@ void ServerInstance::ReplicateState() {
 
 void ServerInstance::StreamChunks() {
     for (auto& [connId, proxy] : _clients) {
-        if (proxy->state != ClientProxy::State::InGame) continue;
+        if (proxy->state == ClientProxy::State::Connected && !proxy->playerEntity.IsValid()) continue;
 
         auto* player = _entityManager->GetEntityAs<PlayerEntity>(proxy->playerEntity);
         assert(player);

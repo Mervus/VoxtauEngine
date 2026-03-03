@@ -55,5 +55,7 @@ public:
     //  Info 
     virtual uint32_t GetRTT(ConnectionID conn) const = 0;
     virtual bool IsConnected(ConnectionID conn) const = 0;
+
+    virtual void Flush() = 0;
 };
 #endif //VOXTAU_INETWORKTRANSPORT_H

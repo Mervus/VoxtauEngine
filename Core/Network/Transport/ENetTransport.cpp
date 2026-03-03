@@ -148,6 +148,7 @@ void ENetTransport::SendPacket(ConnectionID conn, std::span<const uint8_t> data,
 
     uint8_t ch = (channel < CHANNEL_COUNT) ? channel : 0;
     enet_peer_send(it->second, ch, packet);
+    Flush();
 }
 
 void ENetTransport::Broadcast(std::span<const uint8_t> data,
@@ -240,6 +241,11 @@ bool ENetTransport::IsConnected(ConnectionID conn) const {
     auto it = _peers.find(conn);
     if (it == _peers.end()) return false;
     return it->second->state == ENET_PEER_STATE_CONNECTED;
+}
+
+void ENetTransport::Flush()
+{
+    if (_host) enet_host_flush(_host);
 }
 
 //  Internal 
