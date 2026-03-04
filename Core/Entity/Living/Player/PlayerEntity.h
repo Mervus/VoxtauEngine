@@ -64,9 +64,19 @@ public:
 
     virtual void OnRespawn() {}
 
-    // Replication
-    // virtual void SerializeNetState(ByteBuffer& buffer) override;
-    // virtual void DeserializeNetState(ByteBuffer& buffer) override;
+public:
+    Math::Vector3 _renderOffset;
+    void SetRenderOffset(const Math::Vector3& offset) { _renderOffset = offset; }
+
+    RenderData GetRenderData() const override {
+        RenderData rd = _renderData;
+        rd.worldMatrix = _transform.GetWorldMatrix();
+        rd.worldMatrix.m[3][0] += _renderOffset.x;
+        rd.worldMatrix.m[3][1] += _renderOffset.y;
+        rd.worldMatrix.m[3][2] += _renderOffset.z;
+        rd.animator = _animator;
+        return rd;
+    }
 };
 
 #endif //VOXTAU_PLAYER_H

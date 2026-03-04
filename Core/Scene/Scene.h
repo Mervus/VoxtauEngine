@@ -71,7 +71,6 @@ public:
     [[nodiscard]] InputManager* GetInputManager() const { return inputManager; }
     [[nodiscard]] IRendererApi* GetRenderer() const { return renderer; }
     [[nodiscard]] ShaderCollection* GetShaderCollection() const { return shaderCollection; }
-
     // Virtual methods for shadow system integration
     virtual ChunkManager* GetChunkManager() const { return nullptr; }
     virtual Math::Vector3 GetSunDirection() const { return Math::Vector3(0.3f, 0.7f, 0.5f).Normalized(); }

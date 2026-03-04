@@ -13,7 +13,7 @@ LivingEntity::LivingEntity(EntityType type, const std::string& name)
     , _maxHealth(100.0f)
     , _maxMana(50.0f)
     , _moveSpeed(2.5f)
-    , _level(1)
+    , _velocity(0,0,0)
 {
 }
 
@@ -22,6 +22,11 @@ LivingEntity::~LivingEntity() {
 
 void LivingEntity::Update(float deltaTime) {
     if (_isDead) return;
+    float speed = std::sqrt(_velocity.x * _velocity.x + _velocity.z * _velocity.z);
+    if (speed > 0.1f) {
+        float moveYaw = std::atan2(_velocity.x, _velocity.z);
+        SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(moveYaw, 0, 0)));
+    }
 }
 
 // Health & Mana

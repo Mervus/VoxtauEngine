@@ -72,7 +72,7 @@ public:
 
     // Spatial Queries
 
-    // Flat loop — fine for < 200 entities, swap to spatial hash later (Something like Quadtree or Octree.)
+    // Flat loop fine for < 200 entities, swap to spatial hash later (Something like Quadtree or Octree.)
     [[nodiscard]] std::vector<EntityID> FindEntitiesInRadius(const Math::Vector3& center, float radius) const;
     [[nodiscard]] std::vector<EntityID> FindEntitiesInRadius(const Math::Vector3& center, float radius, EntityType filter) const;
     [[nodiscard]] EntityID FindNearestEntity(const Math::Vector3& center, EntityType filter) const;
