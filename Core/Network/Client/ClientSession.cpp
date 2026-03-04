@@ -219,7 +219,7 @@ Math::Vector3 ClientSession::GetEntityVelocity(EntityID id) const {
     if (_interpolator) return _interpolator->GetVelocity(id);
     return {};
 }
-//  Internal: Process Server Snapshots 
+//  Internal: Process Server Snapshots
 
 void ClientSession::ProcessServerSnapshots() {
     if (!_transport) return;
