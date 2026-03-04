@@ -3,6 +3,8 @@
 //
 
 #include "PlayerEntity.h"
+
+#include "Core/Network/Client/ClientSession.h"
 #include "Core/Physics/Voxtau/VoxelPhysics.h"
 
 PlayerEntity::PlayerEntity(const std::string& name)
@@ -90,4 +92,15 @@ void PlayerEntity::Respawn() {
     SetPosition(_respawnPosition);
 
     OnRespawn();
+}
+
+RenderData PlayerEntity::GetRenderData() const
+{
+    RenderData rd = _renderData;
+    rd.worldMatrix = _transform.GetRotation().ToMatrix();
+    rd.worldMatrix.m[3][0] += _transform.GetPosition().x;
+    rd.worldMatrix.m[3][1] += _transform.GetPosition().y;
+    rd.worldMatrix.m[3][2] += _transform.GetPosition().z;
+    rd.animator = _animator;
+    return rd;
 }

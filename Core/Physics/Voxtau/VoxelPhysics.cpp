@@ -119,9 +119,8 @@ void VoxelPhysics::StepBody(VoxelBody& body, float dt) {
     }
 
     // 3. Combine velocities into this tick's movement delta
-    Math::Vector3 totalVelocity = body.velocity + body.inputVelocity;
-    Math::Vector3 delta = totalVelocity * dt;
-
+    Math::Vector3 delta = (body.velocity + body.inputVelocity) * dt;
+    body.totalVelocity = body.velocity + body.inputVelocity;
     // 4. Clear input velocity (it's consumed each tick)
     body.inputVelocity = Math::Vector3(0, 0, 0);
 

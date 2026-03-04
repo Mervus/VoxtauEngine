@@ -382,8 +382,9 @@ void ServerInstance::ApplyClientInputs() {
 
         body->inputVelocity.x = worldMoveX * player->GetMoveSpeed();
         body->inputVelocity.z = worldMoveZ * player->GetMoveSpeed();
+        body->totalVelocity = Vector3(body->inputVelocity.x, body->velocity.y, body->inputVelocity.z);
 
-        player->SetVelocity(Vector3(body->inputVelocity.x, 0.0f, body->inputVelocity.z));
+        player->SetVelocity(body->totalVelocity);
 
         // Handle fly mode if allowed
         // if (proxy->canFly) {
@@ -456,7 +457,7 @@ void ServerInstance::ReplicateState() {
                 state.health = living->GetCurrentHealth();
                 state.maxHealth = living->GetMaxHealth();
                 state.isDead = living->IsDead();
-                state.velocity = Math::Vector3(); // TODO: get from physics body
+                state.velocity = living->GetVelocity();
             }
 
             snapshot.entities.push_back(state);
@@ -553,7 +554,7 @@ EntityID ServerInstance::SpawnPlayer(ConnectionID client)
     // Create a physics body for this player
     // Default spawn position — game code overrides via OnPlayerSpawned callback
     Math::Vector3 spawnPos(0.0f, 80.0f, 0.0f);
-    VoxelBodyID bodyId = _physics->CreateBody(spawnPos, 0.6f, 1.8f);
+    VoxelBodyID bodyId = _physics->CreateBody(spawnPos, 0.6f, 5.f);
     player->SetPosition(spawnPos);
     player->BindPhysics(_physics.get(), bodyId);
     player->SetRespawnPosition(spawnPos);

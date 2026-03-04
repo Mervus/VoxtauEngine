@@ -66,10 +66,8 @@ void ClientSession::Initialize(INetworkTransport* transport) {
     std::cout << "[Client] Initialized" << std::endl;
 }
 
-void ClientSession::InitializePrediction(VoxelSolidQuery solidQuery,
-                                          const Math::Vector3& startPos,
-                                          float bodyWidth, float bodyHeight) {
-    _predictionPhysics->Initialize(std::move(solidQuery));
+void ClientSession::InitializePrediction(const Math::Vector3& startPos, float bodyWidth, float bodyHeight) {
+    _predictionPhysics->Initialize(_localChunkManager.get());
 
     // Create a prediction body matching the server's player body
     _predictionBody = _predictionPhysics->CreateBody(startPos, bodyWidth, bodyHeight);
@@ -81,6 +79,7 @@ void ClientSession::InitializePrediction(VoxelSolidQuery solidQuery,
     _simulationPosition = startPos;
     _visualPosition = startPos;
 
+    std::cout << "[Client] Prediction body: " << _predictionBody.value << std::endl;
     std::cout << "[Client] Prediction initialized at ("
               << startPos.x << ", " << startPos.y << ", " << startPos.z << ")" << std::endl;
 }
@@ -104,7 +103,6 @@ void ClientSession::Connect(const std::string& address, uint16_t port) {
 }
 
 //  Per-Tick 
-
 void ClientSession::Tick(float deltaTime) {
     ProcessServerSnapshots();
     SendInput();
@@ -119,12 +117,20 @@ void ClientSession::Tick(float deltaTime) {
     if (_localEntityManager) {
         auto* localPlayer = _localEntityManager->GetEntityAs<PlayerEntity>(_localPlayerEntity);
         if (localPlayer) {
-            localPlayer->SetPosition(_simulationPosition);
-            localPlayer->SetRenderOffset(GetLocalPlayerRenderOffset());
-            localPlayer->SetVelocity(_predictionPhysics && _predictionBody.IsValid()
-                ? _predictionPhysics->GetBody(_predictionBody)->velocity
-                : Math::Vector3()
-                );
+            localPlayer->SetPosition(_visualPosition);
+            //localPlayer->SetRenderOffset(GetLocalPlayerRenderOffset());
+
+            assert(_predictionPhysics);
+            assert(_predictionBody.IsValid());
+            localPlayer->SetVelocity(_predictionPhysics->GetBody(_predictionBody)->totalVelocity);
+
+            //TODO: snaps to position.
+            Math::Vector3 vel = localPlayer->GetVelocity();
+            float speed = std::sqrt(vel.x * vel.x + vel.z * vel.z);
+            if (speed > 0.1f) {
+                float moveYaw = std::atan2(vel.x, vel.z);
+                localPlayer->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(moveYaw, 0, 0)));
+            }
         }
 
         // Remote entities from interpolator
@@ -134,15 +140,19 @@ void ClientSession::Tick(float deltaTime) {
                 if (!_interpolator->HasEntity(e->GetID())) return;
                 e->SetPosition(_interpolator->GetPosition(e->GetID()));
                 if (auto* living = dynamic_cast<LivingEntity*>(e)) {
-                    living->SetVelocity(_interpolator->GetVelocity(e->GetID()));
+                    Vector3 vel = _interpolator->GetVelocity(e->GetID());
+                    living->SetVelocity(vel);
+
+                    float moveYaw = std::atan2(vel.x, vel.z);
+                    living->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(moveYaw, 0, 0)));
                 }
             });
         }
     }
+
 }
 
 //  Input 
-
 void ClientSession::SetLocalInput(const PlayerInputState& input) {
     // Store in ring buffer for replay during reconciliation
     uint32_t index = _currentTick % INPUT_BUFFER_SIZE;
@@ -207,11 +217,11 @@ float ClientSession::GetRTT() const {
 
 Math::Vector3 ClientSession::GetLocalPlayerRenderOffset() const
 {
-    return Math::Vector3(
-    _visualPosition.x - _simulationPosition.x,
-    _visualPosition.y - _simulationPosition.y,
-    _visualPosition.z - _simulationPosition.z
-);
+    return {
+        _visualPosition.x - _simulationPosition.x,
+        _visualPosition.y - _simulationPosition.y,
+        _visualPosition.z - _simulationPosition.z
+    };
 }
 
 Math::Vector3 ClientSession::GetEntityVelocity(EntityID id) const {
@@ -299,6 +309,7 @@ void ClientSession::ProcessServerSnapshots() {
                                     << _spawnPosition.x << ", " << _spawnPosition.y << ", "
                                     << _spawnPosition.z << ")" << std::endl;
 
+                        InitializePrediction(spawnData.spawnPos, 0.6f, 1.8f);
 
                         std::cout << "[Client] Sending ClientReady on conn=" << _serverConnectionId << std::endl;
 
@@ -380,8 +391,9 @@ void ClientSession::Predict() {
     float worldMoveX = -(input.moveX * cosYaw + input.moveZ * sinYaw);
     float worldMoveZ = -(-input.moveX * sinYaw + input.moveZ * cosYaw);
 
-    body->inputVelocity.x = worldMoveX * 4.0f; // TODO: get move speed from player config
-    body->inputVelocity.z = worldMoveZ * 4.0f;
+    body->inputVelocity.x = worldMoveX * 2.5f; // TODO: get move speed from player config
+    body->inputVelocity.z = worldMoveZ * 2.5f;
+
 
     if ((input.buttons & InputButton::Jump) && body->grounded) {
         body->velocity.y = 8.0f; // TODO: get jump force from player config
@@ -398,7 +410,7 @@ void ClientSession::Predict() {
     _stateHistory[index].onGround = body->grounded;
 
     _simulationPosition = body->position;
-    //_visualPosition = _simulationPosition;  // no lag — snap every frame
+    //_visualPosition = _simulationPosition;  // big lag
     _currentTick++;
 }
 
@@ -436,7 +448,7 @@ void ClientSession::Reconcile(const ServerSnapshot& snapshot) {
 
     // Rewind to server's authoritative state
     body->position = snapshot.playerPosition;
-    body->velocity = snapshot.playerVelocity;
+    body->velocity = Vector3(snapshot.playerVelocity.x, snapshot.playerVelocity.y, snapshot.playerVelocity.z);
     body->grounded = snapshot.playerOnGround;
 
     float fixedDt = _predictionPhysics->GetConfig().fixedTimestep;
@@ -483,7 +495,7 @@ void ClientSession::Reconcile(const ServerSnapshot& snapshot) {
     //std::cout << "[Client] Position " << body->position << std::endl;
 
     // float error = std::sqrt(errorSq);
-    // if (error > 0.1f) {
+    // if (error > 0.2f) {
     //     std::cout << "[Client] Reconciled: error=" << error
     //               << " replayed " << (_currentTick - serverTick - 1) << " ticks" << std::endl;
     // }

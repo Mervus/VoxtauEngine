@@ -49,6 +49,7 @@ struct VoxelBody {
     // Velocity
     Math::Vector3 velocity;         // Persistent velocity (gravity accumulates here)
     Math::Vector3 inputVelocity;    // Movement wish for this tick (cleared after each step)
+    Math::Vector3 totalVelocity;    // vertical velocity + horizontal velocity
 
     // Collision results (set by VoxelPhysics::Step)
     bool grounded   = false;

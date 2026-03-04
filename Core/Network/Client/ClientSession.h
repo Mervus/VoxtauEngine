@@ -42,8 +42,7 @@ public:
     // solidQuery: how the prediction physics checks for solid blocks
     //   - Singleplayer: share the server's ChunkManager::IsSolidAt
     //   - Remote: use client's local chunk cache
-    void InitializePrediction(VoxelSolidQuery solidQuery,
-                              const Math::Vector3& startPos,
+    void InitializePrediction(const Math::Vector3& startPos,
                               float bodyWidth = 0.6f,
                               float bodyHeight = 1.8f);
 

@@ -246,7 +246,7 @@ if(NOT VOXTAU_SERVER_ONLY)
 
     add_custom_target(copy_assets
             COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_CURRENT_LIST_DIR}/Assets ${CMAKE_BINARY_DIR}/bin/Assets
+            ${CMAKE_CURRENT_LIST_DIR}/EngineAssets ${CMAKE_BINARY_DIR}/bin/EngineAssets
     )
     add_dependencies(Engine copy_assets)
 

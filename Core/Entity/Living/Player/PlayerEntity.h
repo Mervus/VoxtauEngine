@@ -45,7 +45,7 @@ public:
     VoxelBodyID GetPhysicsBodyID() const { return _bodyId; }
 
     // Movement Interface
-    // Called by PlayerController — doesn't read input directly
+    // Called by PlayerController doesn't read input directly
 
     // Sets the horizontal input velocity on the physics body
     virtual void MoveInput(const Math::Vector3& direction, float deltaTime);
@@ -68,15 +68,7 @@ public:
     Math::Vector3 _renderOffset;
     void SetRenderOffset(const Math::Vector3& offset) { _renderOffset = offset; }
 
-    RenderData GetRenderData() const override {
-        RenderData rd = _renderData;
-        rd.worldMatrix = _transform.GetWorldMatrix();
-        rd.worldMatrix.m[3][0] += _renderOffset.x;
-        rd.worldMatrix.m[3][1] += _renderOffset.y;
-        rd.worldMatrix.m[3][2] += _renderOffset.z;
-        rd.animator = _animator;
-        return rd;
-    }
+    RenderData GetRenderData() const override;
 };
 
 #endif //VOXTAU_PLAYER_H
