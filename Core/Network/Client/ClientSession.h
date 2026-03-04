@@ -9,6 +9,8 @@
 #include <memory>
 #include <vector>
 #include <cstdint>
+
+#include "EntityInterpolator.h"
 #include "Core/Entity/EntityID.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Physics/Voxtau/VoxelBody.h"
@@ -81,13 +83,15 @@ public:
     float GetRTT() const;
     bool IsConnected() const { return _connected; }
 
+    Math::Vector3 GetLocalPlayerRenderOffset() const;
+
     // Query for the scene's loading state
     bool HasReceivedSpawn() const { return _hasReceivedSpawn; }
     uint32_t GetChunksReceived() const { return _chunksReceived; }
     Math::Vector3 GetSpawnPosition() const { return _spawnPosition; }
     ChunkManager* GetLocalChunkManager(){return _localChunkManager.get(); }
     EntityManager* GetLocalEntityManager() { return _localEntityManager.get(); }
-
+    Math::Vector3 GetEntityVelocity(EntityID id) const;
 private:
     INetworkTransport* _transport = nullptr;  // not owned
     ConnectionID _serverConnectionId = 0;

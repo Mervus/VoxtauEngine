@@ -22,7 +22,6 @@ void PlayerEntity::BindPhysics(VoxelPhysics* physics, VoxelBodyID bodyId) {
 
 void PlayerEntity::Update(float deltaTime) {
     LivingEntity::Update(deltaTime);
-
     if (!_physics || !_bodyId.IsValid()) return;
 
     // Read authoritative position from physics body

@@ -109,19 +109,34 @@ void ClientSession::Tick(float deltaTime) {
     ProcessServerSnapshots();
     SendInput();
     Predict();
+    //SmoothVisualPosition(deltaTime);
 
-    // 5. Push smoothed position back to the player entity (for rendering and camera)
-    // TODO: Extremely laggy because ping how can we do this better.
-    // if (_localEntityManager && _localPlayerEntity.IsValid()) {
-    //     Entity* entity = _localEntityManager->GetEntity(_localPlayerEntity);
-    //     if (entity) {
-    //         entity->SetPosition(_visualPosition);
-    //     }
-    // }
-
-    // Advance interpolation for remote entities
     if (_interpolator) {
         _interpolator->Update(deltaTime);
+    }
+
+    // Sync simulation position to local player entity
+    if (_localEntityManager) {
+        auto* localPlayer = _localEntityManager->GetEntityAs<PlayerEntity>(_localPlayerEntity);
+        if (localPlayer) {
+            localPlayer->SetPosition(_simulationPosition);
+            localPlayer->SetRenderOffset(GetLocalPlayerRenderOffset());
+            localPlayer->SetVelocity(_predictionPhysics && _predictionBody.IsValid()
+      ? _predictionPhysics->GetBody(_predictionBody)->velocity
+      : Math::Vector3());
+        }
+
+        // Remote entities from interpolator
+        if (_interpolator) {
+            _localEntityManager->ForEach([&](Entity* e) {
+                if (e->GetID() == _localPlayerEntity) return;
+                if (!_interpolator->HasEntity(e->GetID())) return;
+                e->SetPosition(_interpolator->GetPosition(e->GetID()));
+                if (auto* living = dynamic_cast<LivingEntity*>(e)) {
+                    living->SetVelocity(_interpolator->GetVelocity(e->GetID()));
+                }
+            });
+        }
     }
 }
 
@@ -189,6 +204,20 @@ float ClientSession::GetRTT() const {
     return 0.0f;
 }
 
+Math::Vector3 ClientSession::GetLocalPlayerRenderOffset() const
+{
+    return Math::Vector3(
+    _visualPosition.x - _simulationPosition.x,
+    _visualPosition.y - _simulationPosition.y,
+    _visualPosition.z - _simulationPosition.z
+);
+}
+
+Math::Vector3 ClientSession::GetEntityVelocity(EntityID id) const {
+    assert(_interpolator);
+    if (_interpolator) return _interpolator->GetVelocity(id);
+    return {};
+}
 //  Internal: Process Server Snapshots 
 
 void ClientSession::ProcessServerSnapshots() {
@@ -347,8 +376,8 @@ void ClientSession::Predict() {
     float sinYaw = std::sin(input.yaw);
     float cosYaw = std::cos(input.yaw);
 
-    float worldMoveX = input.moveX * cosYaw - input.moveZ * sinYaw;
-    float worldMoveZ = input.moveX * sinYaw + input.moveZ * cosYaw;
+    float worldMoveX = -(input.moveX * cosYaw + input.moveZ * sinYaw);
+    float worldMoveZ = -(-input.moveX * sinYaw + input.moveZ * cosYaw);
 
     body->inputVelocity.x = worldMoveX * 4.0f; // TODO: get move speed from player config
     body->inputVelocity.z = worldMoveZ * 4.0f;
@@ -368,6 +397,7 @@ void ClientSession::Predict() {
     _stateHistory[index].onGround = body->grounded;
 
     _simulationPosition = body->position;
+    //_visualPosition = _simulationPosition;  // no lag — snap every frame
     _currentTick++;
 }
 

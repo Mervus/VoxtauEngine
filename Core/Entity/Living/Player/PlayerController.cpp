@@ -85,6 +85,13 @@ void PlayerController::Update(float deltaTime) {
         if (_inputManager->IsKeyDown(KeyCode::Space)) input.buttons |= InputButton::Jump;
     }
 
+    // Math::Vector3 vel = player->GetVelocity();
+    // float speed = std::sqrt(vel.x * vel.x + vel.z * vel.z);
+    // if (speed > 0.1f) {
+    //     float moveYaw = std::atan2(vel.x, vel.z);
+    //     player->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(moveYaw, 0, 0)));
+    //
+    // }
     _clientSession->SetLocalInput(input);
 }
 
