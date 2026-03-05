@@ -108,7 +108,12 @@ ConnectionID ENetTransport::Connect(const std::string& address, uint16_t port) {
     if (!_host) return 0;
 
     ENetAddress enetAddr;
-    enet_address_set_host(&enetAddr, address.c_str());
+    if (enet_address_set_host(&enetAddr, address.c_str()) != 0)
+    {
+        std::cerr << "[ENet] Invalid host: " << address << std::endl;
+        return 0;
+    }
+
     enetAddr.port = port;
 
     ENetPeer* peer = enet_host_connect(_host, &enetAddr, CHANNEL_COUNT, 0);
@@ -254,8 +259,8 @@ void ENetTransport::Flush()
 
 uint32_t ENetTransport::ToENetFlags(SendMode mode) {
     switch (mode) {
-        case SendMode::Unreliable:          return 0;
-        case SendMode::UnreliableSequenced: return ENET_PACKET_FLAG_UNSEQUENCED;
+        case SendMode::Unreliable:          return ENET_PACKET_FLAG_UNSEQUENCED;
+        case SendMode::UnreliableSequenced: return 0; // ENet default: unreliable + sequenced
         case SendMode::Reliable:            return ENET_PACKET_FLAG_RELIABLE;
         case SendMode::ReliableOrdered:     return ENET_PACKET_FLAG_RELIABLE;
         default:                            return 0;
