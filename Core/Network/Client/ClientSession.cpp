@@ -468,8 +468,8 @@ void ClientSession::Reconcile(const ServerSnapshot& snapshot) {
         float sinYaw = std::sin(input.yaw);
         float cosYaw = std::cos(input.yaw);
 
-        float worldMoveX = input.moveX * cosYaw - input.moveZ * sinYaw;
-        float worldMoveZ = input.moveX * sinYaw + input.moveZ * cosYaw;
+        float worldMoveX = -(input.moveX * cosYaw + input.moveZ * sinYaw);
+        float worldMoveZ = -(-input.moveX * sinYaw + input.moveZ * cosYaw);
 
         body->inputVelocity.x = worldMoveX * 4.0f; // TODO: move speed
         body->inputVelocity.z = worldMoveZ * 4.0f;
