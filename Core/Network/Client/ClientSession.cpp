@@ -129,7 +129,7 @@ void ClientSession::Tick(float deltaTime) {
             float speed = std::sqrt(vel.x * vel.x + vel.z * vel.z);
             if (speed > 0.1f) {
                 float moveYaw = std::atan2(vel.x, vel.z);
-                localPlayer->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(moveYaw, 0, 0)));
+                localPlayer->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(0, moveYaw, 0)));
             }
         }
 
@@ -144,7 +144,7 @@ void ClientSession::Tick(float deltaTime) {
                     living->SetVelocity(vel);
 
                     float moveYaw = std::atan2(vel.x, vel.z);
-                    living->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(moveYaw, 0, 0)));
+                    living->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(0, moveYaw, 0)));
                 }
             });
         }
