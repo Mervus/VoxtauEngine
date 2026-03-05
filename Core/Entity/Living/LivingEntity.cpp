@@ -25,7 +25,7 @@ void LivingEntity::Update(float deltaTime) {
     float speed = std::sqrt(_velocity.x * _velocity.x + _velocity.z * _velocity.z);
     if (speed > 0.1f) {
         float moveYaw = std::atan2(_velocity.x, _velocity.z);
-        SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(moveYaw, 0, 0)));
+        SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(0, moveYaw, 0)));
     }
 }
 
