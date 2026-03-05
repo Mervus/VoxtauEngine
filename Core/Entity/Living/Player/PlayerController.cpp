@@ -9,9 +9,11 @@
 #include <cmath>
 
 #include "Core/Entity/EntityManager.h"
+#include "Core/Network/Client/ClientSession.h"
+#include "Core/Network/Protocol/InputButton.h"
 #include "Resources/Animation/Animator.h"
 
-PlayerController::PlayerController(EntityManager* entityManager, InputManager* inputManager, Camera* camera)
+PlayerController::PlayerController(EntityManager* entityManager, InputManager* inputManager, Camera* camera, ClientSession* clientSession)
     : _entityManager(entityManager)
     , _inputManager(inputManager)
     , _camera(camera)
@@ -20,6 +22,7 @@ PlayerController::PlayerController(EntityManager* entityManager, InputManager* i
     , _mouseSensitivity(0.15f)
     , _cameraOffset(0.0f, 5.0f, -10.0f)
     , _thirdPerson(false)
+    , _clientSession(clientSession)
 {
 }
 
@@ -46,6 +49,7 @@ void PlayerController::Update(float deltaTime) {
     {
         player->GetAnimator()->Update(deltaTime);
     }
+
     // Toggle mouse capture
     if (_inputManager->IsKeyPressed(KeyCode::Escape)) {
         _inputManager->SetMouseCaptured(!_inputManager->IsMouseCaptured());
@@ -64,22 +68,52 @@ void PlayerController::Update(float deltaTime) {
             HandleMovement(deltaTime);
         }
     }
+
+    // Build input state AFTER HandleCamera so yaw/pitch are current
+    PlayerInputState input{};
+    input.tick = _clientSession->GetCurrentTick();
+    input.yaw = _yaw * DEG_TO_RAD;
+    input.pitch = _pitch * DEG_TO_RAD;
+    input.buttons = 0;
+
+    // Gather raw movement axes (no yaw rotation — server applies that)
+    if (_inputManager->IsMouseCaptured() && !_debugCamera) {
+        if (_inputManager->IsKeyDown(KeyCode::W)) input.moveZ += 1.0f;
+        if (_inputManager->IsKeyDown(KeyCode::S)) input.moveZ -= 1.0f;
+        if (_inputManager->IsKeyDown(KeyCode::D)) input.moveX += 1.0f;
+        if (_inputManager->IsKeyDown(KeyCode::A)) input.moveX -= 1.0f;
+        if (_inputManager->IsKeyDown(KeyCode::Space)) input.buttons |= InputButton::Jump;
+    }
+
+    // Math::Vector3 vel = player->GetVelocity();
+    // float speed = std::sqrt(vel.x * vel.x + vel.z * vel.z);
+    // if (speed > 0.1f) {
+    //     float moveYaw = std::atan2(vel.x, vel.z);
+    //     player->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(moveYaw, 0, 0)));
+    //
+    // }
+    _clientSession->SetLocalInput(input);
 }
 
 void PlayerController::LateUpdate(float deltaTime) {
-    if (!_camera) return;
+    if (!_camera || _debugCamera) return;
 
-    // Debug camera is already positioned by HandleDebugMovement
-    if (_debugCamera) return;
+    Math::Vector3 playerPos;
 
     PlayerEntity* player = GetPlayer();
     if (!player) return;
 
-    Math::Vector3 playerPos = player->GetPosition();
+    if (_clientSession) {
+        playerPos = _clientSession->GetLocalPlayerVisualPosition();
+    } else {
+        // Fallback for singleplayer/demo without ClientSession
+        PlayerEntity* player = GetPlayer();
+        if (!player) return;
+        playerPos = player->GetPosition();
+    }
 
     if (_thirdPerson) {
         float yawRad = _yaw * DEG_TO_RAD;
-
         Math::Vector3 offset;
         offset.x = _cameraOffset.z * std::sin(yawRad);
         offset.y = _cameraOffset.y;
@@ -109,38 +143,23 @@ void PlayerController::HandleMovement(float deltaTime) {
     PlayerEntity* player = GetPlayer();
     if (!player) return;
 
-    float yawRad = _yaw * DEG_TO_RAD;
-    Math::Vector3 forward(std::sin(yawRad), 0.0f, std::cos(yawRad));
-    Math::Vector3 right(std::cos(yawRad), 0.0f, -std::sin(yawRad));
+    bool isMoving = _inputManager->IsKeyDown(KeyCode::W) ||
+                    _inputManager->IsKeyDown(KeyCode::S) ||
+                    _inputManager->IsKeyDown(KeyCode::D) ||
+                    _inputManager->IsKeyDown(KeyCode::A);
 
-    Math::Vector3 direction(0.0f, 0.0f, 0.0f);
-
-    if (_inputManager->IsKeyDown(KeyCode::W)) direction = direction + forward;
-    if (_inputManager->IsKeyDown(KeyCode::S)) direction = direction - forward;
-    if (_inputManager->IsKeyDown(KeyCode::D)) direction = direction + right;
-    if (_inputManager->IsKeyDown(KeyCode::A)) direction = direction - right;
-
-    bool isMoving = direction.LengthSquared() > 0.0f;
-    if (isMoving) {
-        direction = direction.Normalized();
-    }
-
-    // Switch animation based on movement
     Animator* animator = player->GetAnimator();
     if (animator) {
+        MovementState state = player->GetMovementState();
         const std::string& current = animator->GetCurrentClipName();
-        if (isMoving && current != "Running") {
+
+        if (state == MovementState::Jumping || state == MovementState::Falling) {
+            // Airborne — keep current anim
+        } else if (isMoving && current != "Running") {
             animator->Play("Running", true);
         } else if (!isMoving && current != "Idle") {
             animator->Play("Idle", true);
         }
-    }
-
-    player->MoveInput(direction, deltaTime);
-
-    // Jump
-    if (_inputManager->IsKeyDown(KeyCode::Space)) {
-        player->Jump();
     }
 }
 

@@ -8,7 +8,7 @@
 #include <EngineApi.h>
 #include "Core/Entity/Entity.h"
 
-class ENGINE_API LivingEntity : public Entity {
+class LivingEntity : public Entity {
 private:
     float _currentHealth;
     float _currentMana;
@@ -18,7 +18,7 @@ protected:
     float _maxHealth;
     float _maxMana;
     float _moveSpeed;
-    int _level;
+    Vector3 _velocity;
 
     // Called when health reaches zero — override for death behavior
     virtual void OnDeath(EntityID killedBy) {}
@@ -41,13 +41,12 @@ public:
     void SetMoveSpeed(float value) { _moveSpeed = value; }
     void SetCurrentHealth(float health);
 
+    void SetVelocity(const Math::Vector3& vel) { _velocity = vel; }
+    Math::Vector3 GetVelocity() const { return _velocity; }
+
     // Damage/heal — virtual so game layer can apply custom formulas
     virtual float TakeDamage(float amount, EntityID source);
     virtual void Heal(float amount);
-
-    // Level
-    int GetLevel() const { return _level; }
-    void SetLevel(int level) { _level = level; }
 
     // Movement
     virtual void Move(const Math::Vector3& direction, float deltaTime);

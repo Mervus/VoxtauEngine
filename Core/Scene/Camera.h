@@ -10,7 +10,7 @@
 #include "Core/Math/Vector3.h"
 #include <EngineApi.h>
 
-class ENGINE_API Camera {
+class Camera {
 private:
     Math::Vector3 position;
     Math::Vector3 forward;
@@ -40,6 +40,7 @@ public:
     void SetPosition(const Math::Vector3& pos);
     void SetLookAt(const Math::Vector3& target);
     void SetPerspective(float fov, float aspect, float near, float far);
+    void SetAspectRatio(float aspect);
 
     // Movement
     void Move(const Math::Vector3& offset);

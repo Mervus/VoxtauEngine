@@ -10,7 +10,7 @@
 #include "../Renderer/Vertex.h"
 #include <vector>
 
-class ENGINE_API VoxelMesh : public Mesh {
+class VoxelMesh : public Mesh {
 private:
     std::vector<VoxelVertex> voxelVertices;
     std::vector<uint32_t> voxelIndices;

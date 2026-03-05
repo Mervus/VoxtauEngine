@@ -11,7 +11,7 @@
 #include "Entity.h"
 #include "EntityID.h"
 
-class ENGINE_API EntityManager
+class EntityManager
 {
 private:
     std::unordered_map<EntityID, std::unique_ptr<Entity>> _entities;
@@ -21,7 +21,9 @@ private:
 
 public:
     EntityManager();
+    EntityManager(EntityID playerID) : _playerID(playerID) {};
     ~EntityManager();
+
 
     // Cannot copy EntityManager
     EntityManager(const EntityManager&) = delete;
@@ -34,6 +36,9 @@ public:
     // Returns the EntityID (not a pointer) — use GetEntity() to resolve
     template<typename T, typename... Args>
     EntityID CreateEntity(Args&&... args);
+
+    template<typename T, typename... Args>
+    EntityID CreateEntityWithID(EntityID id, Args&&... args);
 
     // Destruction
     // Marks entity for deferred destruction (safe to call during Update)
@@ -67,7 +72,7 @@ public:
 
     // Spatial Queries
 
-    // Flat loop — fine for < 200 entities, swap to spatial hash later (Something like Quadtree or Octree.)
+    // Flat loop fine for < 200 entities, swap to spatial hash later (Something like Quadtree or Octree.)
     [[nodiscard]] std::vector<EntityID> FindEntitiesInRadius(const Math::Vector3& center, float radius) const;
     [[nodiscard]] std::vector<EntityID> FindEntitiesInRadius(const Math::Vector3& center, float radius, EntityType filter) const;
     [[nodiscard]] EntityID FindNearestEntity(const Math::Vector3& center, EntityType filter) const;
@@ -93,14 +98,34 @@ EntityID EntityManager::CreateEntity(Args&&... args) {
     entity->_id = id;
     entity->_entityManager = this;
 
-    // Auto-cache player ID TODO: blindly overwrites _playerID with the latest player, so if you go multiplayer, you'll want to rethink that cached field too (e.g., make it local-player-only or remove it entirely).
-    if (entity->GetType() == EntityType::Player) {
-        _playerID = id;
+    entity->OnInit();
+
+    _entities[id] = std::move(entity);
+    return id;
+}
+
+template<typename T, typename... Args>
+EntityID EntityManager::CreateEntityWithID(EntityID id, Args&&... args) {
+    static_assert(std::is_base_of_v<Entity, T>, "T must derive from Entity");
+
+    if (id.Get() == 0 || _entities.contains(id))
+    {
+        return EntityID::Invalid;
     }
+
+    auto entity = std::make_unique<T>(std::forward<Args>(args)...);
+    entity->_id = id;
+    entity->_entityManager = this;
 
     entity->OnInit();
 
     _entities[id] = std::move(entity);
+
+    // Keep counter ahead to avoid collisions if CreateEntity is also used
+    if (id.Get() >= _nextId) {
+        _nextId = id.Get() + 1;
+    }
+
     return id;
 }
 

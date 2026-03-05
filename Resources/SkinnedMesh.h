@@ -11,7 +11,7 @@
 #include "Renderer/Vertex.h"
 #include <vector>
 
-class ENGINE_API SkinnedMesh : public Mesh {
+class SkinnedMesh : public Mesh {
 private:
     std::vector<SkinnedVertex> skinnedVertices;
 

@@ -269,7 +269,7 @@ namespace Math {
     Matrix4x4 Matrix4x4::Inverted() const {
       float det = Determinant();
 
-    if (std::abs(det) < EPSILON) {
+    if (std::abs(det) < 1e-10f) {
         return Identity;
     }
 

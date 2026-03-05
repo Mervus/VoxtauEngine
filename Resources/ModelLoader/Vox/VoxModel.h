@@ -18,7 +18,7 @@ struct VoxVoxel {
     uint8_t colorIndex; // Index into the palette (1-255, 0 = empty)
 };
 
-struct ENGINE_API VoxModel {
+struct VoxModel {
     uint32_t sizeX = 0;
     uint32_t sizeY = 0;
     uint32_t sizeZ = 0;

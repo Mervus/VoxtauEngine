@@ -35,7 +35,7 @@ inline bool operator&(ShaderStage a, ShaderStage b) {
     return (static_cast<int>(a) & static_cast<int>(b)) != 0;
 }
 
-class ENGINE_API IRendererApi
+class IRendererApi
 {
     public:
     virtual ~IRendererApi() = default;

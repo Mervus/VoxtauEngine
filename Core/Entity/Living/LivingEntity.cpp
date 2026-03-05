@@ -13,7 +13,7 @@ LivingEntity::LivingEntity(EntityType type, const std::string& name)
     , _maxHealth(100.0f)
     , _maxMana(50.0f)
     , _moveSpeed(2.5f)
-    , _level(1)
+    , _velocity(0,0,0)
 {
 }
 
@@ -22,6 +22,7 @@ LivingEntity::~LivingEntity() {
 
 void LivingEntity::Update(float deltaTime) {
     if (_isDead) return;
+
 }
 
 // Health & Mana

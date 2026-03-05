@@ -11,7 +11,7 @@
 struct Vertex;
 class Mesh;
 
-class ENGINE_API VoxMesher {
+class VoxMesher {
 public:
     // Convert a VoxModel to a Mesh with per-face vertex colors from the palette.
     // centerOrigin: if true, centers the mesh so (0,0,0) is the model center.

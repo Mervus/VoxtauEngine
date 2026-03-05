@@ -6,7 +6,7 @@
 #define VOXTAU_ENTITYID_H
 #include <EngineApi.h>
 
-struct ENGINE_API EntityID {
+struct EntityID {
     static constexpr uint32_t INVALID_VALUE = 0;
     static const EntityID Invalid;
 

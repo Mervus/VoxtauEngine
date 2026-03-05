@@ -112,7 +112,6 @@ void DemoGameplayScene::OnInit()
     _voxelRenderer->Initialize(true);
     _voxelRenderer->SetChunkManager(_chunkManager);
 
-    _renderPipeline->SetVoxelWorld(_chunkManager, _voxelRenderer);
     _renderPipeline->SetSkyRenderer(_skyRenderer);
     _renderPipeline->SetDebugRenderer(_debugLineRenderer);
 
@@ -215,7 +214,7 @@ void DemoGameplayScene::SetupPlayer()
     PlayerEntity* player = _entityManager->GetEntityAs<PlayerEntity>(playerID);
 
     // No mesh — the player is an invisible physics body with a camera
-    _playerController = new PlayerController(_entityManager, inputManager, mainCamera);
+    _playerController = new PlayerController(_entityManager, inputManager, mainCamera, nullptr);
     _playerController->SetPlayerID(playerID);
 
     Math::Vector3 spawnPos(0.0f, 24.0f, 0.0f);

@@ -69,9 +69,10 @@ Camera* Scene::GetMainCamera() const {
     return mainCamera;
 }
 
-void Scene::SetSystems(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* input) {
+void Scene::SetSystems(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* input, ClientSession* clientSession) {
     this->renderer = renderer;
     this->shaderCollection = shaders;
     this->resourceManager = resources;
     this->inputManager = input;
+    this->clientSession = clientSession;
 }

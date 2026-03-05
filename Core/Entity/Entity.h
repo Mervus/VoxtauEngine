@@ -29,7 +29,7 @@ struct RenderData {
     bool IsSkinned() const { return animator != nullptr; }
 };
 
-class ENGINE_API Entity
+class Entity
 {
     friend class EntityManager;
 
@@ -43,16 +43,19 @@ private:
 
 protected:
     Transform _transform;
-    EntityManager* _entityManager;
     RenderData _renderData;
     Animator* _animator = nullptr;
+    EntityManager* _entityManager = nullptr; // TODO: does this make sense? "find the nearest enemy" inside entity
 
 public:
-    Entity();
     Entity(EntityType type, const std::string& name = "Entity");
+    Entity(EntityType type, Vector3 spawnPos , const std::string& name = "Entity");
     virtual ~Entity();
 
     virtual void OnInit() {};
+    /**
+     * @param deltaTime
+     */
     virtual void Update(float deltaTime) {};
     virtual void LateUpdate(float deltaTime) {};
     virtual void OnDestroy() {};

@@ -161,30 +161,30 @@ namespace Math {
         result.m[2][1] = 2.0f * (yz - wx);
         result.m[2][2] = 1.0f - 2.0f * (xx + yy);
 
+        //std::cout << "ToMatrix this: " << x << "," << y << "," << z << "," << w << std::endl;
+
         return result;
     }
 
     // Convert to Euler angles (pitch, yaw, roll)
+    // Unity-style YXZ intrinsic extraction
+    // Pitch(X) is the middle rotation → extracted via asin
     Vector3 Quaternion::ToEulerAngles() const {
         Vector3 euler;
 
-        // Pitch (x-axis rotation)
-        float sinp = 2.0f * (w * x + y * z);
-        float cosp = 1.0f - 2.0f * (x * x + y * y);
-        euler.x = std::atan2(sinp, cosp);
-
-        // Yaw (y-axis rotation)
-        float siny = 2.0f * (w * y - z * x);
-        if (std::abs(siny) >= 1.0f) {
-            euler.y = std::copysign(HALF_PI, siny); // Use 90 degrees if out of range
+        // Pitch (x-axis rotation) - middle rotation, extracted via asin
+        float sinp = 2.0f * (w * x - y * z);
+        if (std::abs(sinp) >= 1.0f) {
+            euler.x = std::copysign(HALF_PI, sinp);
         } else {
-            euler.y = std::asin(siny);
+            euler.x = std::asin(sinp);
         }
 
+        // Yaw (y-axis rotation)
+        euler.y = std::atan2(2.0f * (x * z + w * y), 1.0f - 2.0f * (x * x + y * y));
+
         // Roll (z-axis rotation)
-        float sinr = 2.0f * (w * z + x * y);
-        float cosr = 1.0f - 2.0f * (y * y + z * z);
-        euler.z = std::atan2(sinr, cosr);
+        euler.z = std::atan2(2.0f * (x * y + w * z), 1.0f - 2.0f * (x * x + z * z));
 
         return euler;
     }
@@ -196,7 +196,8 @@ namespace Math {
 
     Quaternion Quaternion::FromEulerAngles(float pitch, float yaw, float roll) {
         // Creates quaternion from Euler angles in radians
-        // Rotation order: Roll(Z) * Pitch(X) * Yaw(Y)
+        // pitch = X-axis, yaw = Y-axis, roll = Z-axis
+        // Unity-style YXZ intrinsic: Qy(yaw) * Qx(pitch) * Qz(roll)
 
         float cy = std::cos(yaw * 0.5f);
         float sy = std::sin(yaw * 0.5f);
@@ -206,10 +207,10 @@ namespace Math {
         float sr = std::sin(roll * 0.5f);
 
         Quaternion q;
-        q.w = cr * cp * cy + sr * sp * sy;
-        q.x = sr * cp * cy - cr * sp * sy;
-        q.y = cr * sp * cy + sr * cp * sy;
-        q.z = cr * cp * sy - sr * sp * cy;
+        q.w = cy * cp * cr + sy * sp * sr;
+        q.x = cy * sp * cr + sy * cp * sr;
+        q.y = sy * cp * cr - cy * sp * sr;
+        q.z = cy * cp * sr - sy * sp * cr;
 
         return q;
     }

@@ -13,7 +13,7 @@
 #include "../Core/Math/Vector4.h"
 #include <EngineApi.h>
 
-class ENGINE_API MeshGenerator {
+class MeshGenerator {
 public:
     // Create a simple cube (1x1x1)
     static Mesh* CreateCube(const Math::Vector3& position = Math::Vector3(0, 0, 0));

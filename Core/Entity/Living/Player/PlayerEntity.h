@@ -18,7 +18,7 @@ enum class MovementState : uint8_t {
     Swimming
 };
 
-class ENGINE_API PlayerEntity : public LivingEntity {
+class PlayerEntity : public LivingEntity {
 protected:
     // Movement
     MovementState _movementState = MovementState::Falling;
@@ -45,7 +45,7 @@ public:
     VoxelBodyID GetPhysicsBodyID() const { return _bodyId; }
 
     // Movement Interface
-    // Called by PlayerController — doesn't read input directly
+    // Called by PlayerController doesn't read input directly
 
     // Sets the horizontal input velocity on the physics body
     virtual void MoveInput(const Math::Vector3& direction, float deltaTime);
@@ -64,9 +64,11 @@ public:
 
     virtual void OnRespawn() {}
 
-    // Replication
-    // virtual void SerializeNetState(ByteBuffer& buffer) override;
-    // virtual void DeserializeNetState(ByteBuffer& buffer) override;
+public:
+    Math::Vector3 _renderOffset;
+    void SetRenderOffset(const Math::Vector3& offset) { _renderOffset = offset; }
+
+    RenderData GetRenderData() const override;
 };
 
 #endif //VOXTAU_PLAYER_H

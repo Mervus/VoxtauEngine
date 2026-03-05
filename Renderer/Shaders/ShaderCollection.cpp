@@ -32,7 +32,7 @@ ShaderCollection::~ShaderCollection() {
 }
 
 void ShaderCollection::Initialize() {
-    std::cout << "Initializing ShaderCollection..." << std::endl;
+    std::cout << "[Client] Initializing ShaderCollection..." << std::endl;
 
     // LOAD COMMON SHADERS
 
@@ -72,8 +72,6 @@ void ShaderCollection::Initialize() {
     LoadComputeShader("ChunkMesh", shaderPath + "Compute/ChunkMesh.hlsl");
     LoadComputeShader("BuildDrawArgs",shaderPath + "Compute/BuildDrawArgs.hlsl");
     LoadComputeShader("FrustumCull", shaderPath + "Compute/Culling/FrustumCull.hlsl");
-
-    std::cout << "ShaderCollection initialized successfully!" << std::endl;
 }
 
 ShaderProgram* ShaderCollection::LoadShader(
@@ -82,26 +80,24 @@ ShaderProgram* ShaderCollection::LoadShader(
     const std::string& pixelPath,
     const std::string& geometryPath)
 {
-    std::cout << "Loading shader: " << name << std::endl;
-
     // Check if already loaded in custom shaders
     auto it = customShaders.find(name);
     if (it != customShaders.end()) {
-        std::cout << "  Shader already loaded, returning existing." << std::endl;
+        std::cerr << "[Client] Shader already loaded, returning existing." << std::endl;
         return it->second;
     }
 
     // Load and compile vertex shader
     Shader* vs = LoadShaderFromFile(vertexPath, ShaderType::Vertex);
     if (!vs) {
-        std::cerr << "  ERROR: Failed to load vertex shader: " << vertexPath << std::endl;
+        std::cerr << "[Client] ERROR: Failed to load vertex shader: " << vertexPath << std::endl;
         return nullptr;
     }
 
     // Load and compile pixel shader
     Shader* ps = LoadShaderFromFile(pixelPath, ShaderType::Pixel);
     if (!ps) {
-        std::cerr << "  ERROR: Failed to load pixel shader: " << pixelPath << std::endl;
+        std::cerr << "[Client] ERROR: Failed to load pixel shader: " << pixelPath << std::endl;
         delete vs;
         return nullptr;
     }
@@ -111,11 +107,10 @@ ShaderProgram* ShaderCollection::LoadShader(
     if (!geometryPath.empty()) {
         gs = LoadShaderFromFile(geometryPath, ShaderType::Geometry);
         if (!gs) {
-            std::cerr << "  WARNING: Failed to load geometry shader: " << geometryPath << std::endl;
+            std::cerr << "[Client] WARNING: Failed to load geometry shader: " << geometryPath << std::endl;
         }
     }
 
-    std::cout << "Creating Shader Program " << name << std::endl;
     // Create shader program
     ShaderProgram* program = new ShaderProgram(name);
     program->SetVertexShader(vs);
@@ -126,7 +121,7 @@ ShaderProgram* ShaderCollection::LoadShader(
 
     // Validate
     if (!program->IsValid()) {
-        std::cerr << "  ERROR: Shader program is invalid!" << std::endl;
+        std::cerr << "[Client] ERROR: Shader program is invalid!" << std::endl;
         delete program;
         return nullptr;
     }
@@ -134,7 +129,6 @@ ShaderProgram* ShaderCollection::LoadShader(
     // Store in custom shaders map
     customShaders[name] = program;
 
-    std::cout << "  Shader loaded successfully: " << name << std::endl;
     return program;
 }
 
@@ -142,25 +136,22 @@ Shader* ShaderCollection::LoadComputeShader(
     const std::string& name,
     const std::string& computePath)
 {
-    std::cout << "Loading compute shader: " << name << std::endl;
-
     // Check if already loaded
     auto it = computeShaders.find(name);
     if (it != computeShaders.end()) {
-        std::cout << "  Compute shader already loaded, returning existing." << std::endl;
+        std::cerr << "[Client] Compute shader already loaded, returning existing." << std::endl;
         return it->second;
     }
 
     Shader* cs = LoadShaderFromFile(computePath, ShaderType::Compute);
     if (!cs) {
-        std::cerr << "  ERROR: Failed to load compute shader: " << computePath << std::endl;
+        std::cerr << "[Client] ERROR: Failed to load compute shader: " << computePath << std::endl;
         return nullptr;
     }
 
     // Store in map
     computeShaders[name] = cs;
 
-    std::cout << "  Compute shader loaded successfully: " << name << std::endl;
     return cs;
 }
 
@@ -170,7 +161,7 @@ Shader* ShaderCollection::GetComputeShader(const std::string& name) {
         return it->second;
     }
 
-    std::cerr << "WARNING: Compute shader not found: " << name << std::endl;
+    std::cerr << "[Client] WARNING: Compute shader not found: " << name << std::endl;
     return nullptr;
 }
 

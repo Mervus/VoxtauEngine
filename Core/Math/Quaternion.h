@@ -13,7 +13,7 @@
 namespace Math {
     class Matrix4x4;
 
-    class ENGINE_API Quaternion {
+    class Quaternion {
     public:
         float x, y, z, w;
 

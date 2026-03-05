@@ -9,7 +9,8 @@ int Skeleton::AddBone(const std::string& name, int parentIndex,
                       const Math::Vector3& localPos,
                       const Math::Quaternion& localRot,
                       const Math::Vector3& localScale,
-                      const Math::Matrix4x4& inverseBindPose) {
+                      const Math::Matrix4x4& inverseBindPose,
+                      bool isDeforming) {
     int index = static_cast<int>(bones.size());
 
     Bone bone;
@@ -19,6 +20,7 @@ int Skeleton::AddBone(const std::string& name, int parentIndex,
     bone.localRotation = localRot;
     bone.localScale = localScale;
     bone.inverseBindPose = inverseBindPose;
+    bone.isDeforming = isDeforming;
 
     bones.push_back(bone);
     boneNameToIndex[name] = index;
@@ -43,6 +45,16 @@ const Bone* Skeleton::GetBone(const std::string& name) const {
     int idx = GetBoneIndex(name);
     if (idx < 0) return nullptr;
     return &bones[idx];
+}
+
+void Skeleton::ApplyRootScale(float factor) {
+    for (auto& bone : bones) {
+        if (bone.parentIndex < 0) {
+            bone.localScale.x *= factor;
+            bone.localScale.y *= factor;
+            bone.localScale.z *= factor;
+        }
+    }
 }
 
 Math::Matrix4x4 Skeleton::ComputeBindPoseWorld(int boneIndex) const {

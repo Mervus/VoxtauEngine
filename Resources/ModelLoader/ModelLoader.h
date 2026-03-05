@@ -27,7 +27,7 @@ struct SkinnedModelData {
 };
 
 // Result from unified LoadModel (auto-detects skinned vs static)
-struct ENGINE_API ModelResult {
+struct ModelResult {
     Mesh* mesh = nullptr;             // Mesh or SkinnedMesh (polymorphic)
     bool isSkinned = false;
     std::shared_ptr<Skeleton> skeleton;
@@ -35,7 +35,7 @@ struct ENGINE_API ModelResult {
     std::unique_ptr<TextureData> diffuseTexture;  // null if no texture found
 };
 
-class ENGINE_API ModelLoader
+class ModelLoader
 {
 public:
     // Load a full skinned model (mesh + skeleton + any embedded animations)

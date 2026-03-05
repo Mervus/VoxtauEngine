@@ -27,9 +27,16 @@ struct Bone {
     // Precomputed inverse bind-pose matrix (world space)
     // Used in skinning: finalMatrix = inverseBindPose * currentWorldPose
     Math::Matrix4x4  inverseBindPose;
+
+    // True if this bone actually deforms vertices (has weights in the mesh).
+    // False for ancestor nodes (e.g. Armature/RootNode) that exist only to
+    // maintain the hierarchy.  Animation channels on non-deforming nodes may
+    // carry a different scale than the bind pose (common Mixamo FBX issue),
+    // so the Animator ignores their scale channel.
+    bool isDeforming = false;
 };
 
-class ENGINE_API Skeleton {
+class Skeleton {
 public:
     Skeleton() = default;
     ~Skeleton() = default;
@@ -39,7 +46,8 @@ public:
                 const Math::Vector3& localPos,
                 const Math::Quaternion& localRot,
                 const Math::Vector3& localScale,
-                const Math::Matrix4x4& inverseBindPose);
+                const Math::Matrix4x4& inverseBindPose,
+                bool isDeforming = false);
 
     // Lookup
     int GetBoneIndex(const std::string& name) const;
@@ -51,6 +59,9 @@ public:
 
     // Compute the bind-pose world matrix for a bone (walks up the hierarchy)
     Math::Matrix4x4 ComputeBindPoseWorld(int boneIndex) const;
+
+    // Apply a uniform scale to root bone(s) — used to fix FBX unit mismatches
+    void ApplyRootScale(float factor);
 
 private:
     std::vector<Bone> bones;

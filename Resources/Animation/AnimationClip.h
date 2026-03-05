@@ -47,7 +47,7 @@ private:
     static int FindKeyIndex(const std::vector<Keyframe<T>>& keys, float t);
 };
 
-class ENGINE_API AnimationClip {
+class AnimationClip {
 public:
     AnimationClip() : duration(0.0f), ticksPerSecond(25.0f) {}
     ~AnimationClip() = default;

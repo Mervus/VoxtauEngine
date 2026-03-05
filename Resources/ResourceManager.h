@@ -9,6 +9,8 @@
 #include <memory>
 #include <vector>
 
+#include "BlockRegistry.h"
+
 class ShaderCollection;
 class Mesh;
 class Texture;
@@ -16,7 +18,7 @@ class IRendererApi;
 class Skeleton;
 class AnimationClip;
 
-struct ENGINE_API ModelData
+struct ModelData
 {
     Mesh* mesh = nullptr;
     Texture* texture = nullptr;
@@ -25,17 +27,22 @@ struct ENGINE_API ModelData
     std::vector<std::shared_ptr<AnimationClip>> animations;
 };
 
-class ENGINE_API ResourceManager
+class ResourceManager
 {
 public:
     ResourceManager(IRendererApi* renderer, ShaderCollection* shaderCollection);
+    ~ResourceManager();
 
     ModelData LoadModel(const std::string& filepathModel);
     ModelData LoadModel(const std::string& filepathModel, const std::string& filepathTexture);
+    void LoadBlockRegistry(const std::string& filepath);
 
+    BlockRegistry* GetBlockRegistry() const { return _blockRegistry; };
 private:
     IRendererApi* _renderer = nullptr;
     ShaderCollection* _shaderCollection = nullptr;
+    BlockRegistry* _blockRegistry = nullptr;
+
 };
 
 

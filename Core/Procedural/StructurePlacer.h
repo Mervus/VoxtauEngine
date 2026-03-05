@@ -12,7 +12,7 @@
 class IStructureGenerator;
 class Chunk;
 
-class ENGINE_API StructurePlacer
+class StructurePlacer
 {
 public:
     // Place structures in chunk based on density

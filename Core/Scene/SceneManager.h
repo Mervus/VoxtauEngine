@@ -16,19 +16,22 @@
 class IRendererApi;
 class ShaderCollection;
 class ResourceManager;
+class ClientSession;
 
-class ENGINE_API SceneManager {
+class SceneManager {
 private:
-    std::map<std::string, Scene*> scenes;
-    Scene* currentScene;
-    Scene* nextScene;
-    bool isTransitioning;
+    std::map<std::string, Scene*> _scenes;
+    Scene* _currentScene;
+    Scene* _nextScene;
+    bool _isTransitioning;
 
     // Core systems (passed to scenes)
-    IRendererApi* renderer;
-    ShaderCollection* shaderCollection;
-    ResourceManager* resourceManager;
-    InputManager* inputManager;
+    IRendererApi* _renderer;
+    ShaderCollection* _shaderCollection;
+    ResourceManager* _resourceManager;
+    InputManager* _inputManager;
+    ClientSession* _clientSession;
+
 
     // Callback when scene is loaded
     std::function<void(Scene*)> onSceneLoaded;
@@ -36,7 +39,7 @@ private:
     void PerformTransition();
 
 public:
-    SceneManager(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* inputManager);
+    SceneManager(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* inputManager, ClientSession* clientSession);
     ~SceneManager();
 
     // Scene management
@@ -49,7 +52,7 @@ public:
     void LoadSceneAsync(const std::string& name); // For future async loading
 
     // Current scene
-    [[nodiscard]] Scene* GetCurrentScene() const { return currentScene; }
+    [[nodiscard]] Scene* GetCurrentScene() const { return _currentScene; }
 
     // Set callback for when a scene is loaded
     void SetOnSceneLoaded(std::function<void(Scene*)> callback) { onSceneLoaded = callback; }

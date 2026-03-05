@@ -9,7 +9,7 @@
 #include "TextureData.h"
 #include <EngineApi.h>
 
-class ENGINE_API TextureGenerator {
+class TextureGenerator {
 public:
     // Create a simple colored texture
     static TextureData CreateSolidColor(int width, int height,

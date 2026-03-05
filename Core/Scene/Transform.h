@@ -12,7 +12,7 @@
 
 #include <EngineApi.h>
 
-class ENGINE_API Transform {
+class Transform {
 private:
     Math::Vector3 position;
     Math::Quaternion rotation;

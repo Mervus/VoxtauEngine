@@ -10,6 +10,7 @@
 
 #include "GLFW/glfw3.h"
 #include "Input/InputManager.h"
+#include "Network/NetContext.h"
 #include "Renderer/RenderApi/IRendererApi.h"
 #include "Renderer/Shaders/ShaderCollection.h"
 #include "Scene/SceneManager.h"
@@ -24,33 +25,34 @@
 
 class VoxelShadowSystem;
 
-class ENGINE_API Application
+class Application
 {
 private:
-    void* windowHandle;
-    int windowWidth;
-    int windowHeight;
-    bool isRunning;
+    void* _windowHandle;
+    int _windowWidth;
+    int _windowHeight;
+    bool _isRunning;
     bool _vsync;
 
     // Core systems
-    std::unique_ptr<IRendererApi> renderer;
-    std::unique_ptr<ShaderCollection> shaderCollection;
-    std::unique_ptr<ResourceManager> resourceManager;
-    std::unique_ptr<SceneManager> sceneManager;
+    std::unique_ptr<IRendererApi> _renderer;
+    std::unique_ptr<ShaderCollection> _shaderCollection;
+    std::unique_ptr<ResourceManager> _resourceManager;
+    std::unique_ptr<SceneManager> _sceneManager;
+    std::unique_ptr<NetContext> _netContext;
 
     // ImGui
-    std::unique_ptr<ImGuiManager> imguiManager;
-    std::unique_ptr<SceneHierarchyWindow> sceneHierarchyWindow;
-    std::unique_ptr<PerformanceWindow> performanceWindow;
-    std::unique_ptr<ProfilerWindow> profilerWindow;
-    std::unique_ptr<CompassWindow> compassWindow;
+    std::unique_ptr<ImGuiManager> _imguiManager;
+    std::unique_ptr<SceneHierarchyWindow> _sceneHierarchyWindow;
+    std::unique_ptr<PerformanceWindow> _performanceWindow;
+    std::unique_ptr<ProfilerWindow> _profilerWindow;
+    std::unique_ptr<CompassWindow> _compassWindow;
 
-    std::unique_ptr<InputManager> inputManager;
+    std::unique_ptr<InputManager> _inputManager;
 
     // Timing
-    float deltaTime;
-    float lastFrameTime;
+    float _deltaTime;
+    float _lastFrameTime;
 public:
     Application(const std::string &title);
     ~Application();
@@ -63,8 +65,11 @@ public:
     void Render();
 
     void SetVsync(bool vsync);
-    [[nodiscard]] SceneManager* GetSceneManager() const { return sceneManager.get(); }
-    [[nodiscard]] InputManager* GetInputManager() const { return inputManager.get(); }
+    [[nodiscard]] SceneManager* GetSceneManager() const { return _sceneManager.get(); }
+    [[nodiscard]] InputManager* GetInputManager() const { return _inputManager.get(); }
+    [[nodiscard]] ResourceManager* GetResourceManager() const { return _resourceManager.get(); }
+    [[nodiscard]] NetContext* GetNetContext() const { return _netContext.get(); }
+
 private:
     static void HandleResize(
         GLFWwindow* window,

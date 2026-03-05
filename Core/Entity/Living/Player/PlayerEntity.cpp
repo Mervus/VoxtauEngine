@@ -3,7 +3,10 @@
 //
 
 #include "PlayerEntity.h"
+
+#include "Core/Network/Client/ClientSession.h"
 #include "Core/Physics/Voxtau/VoxelPhysics.h"
+#include "Resources/Animation/Animator.h"
 
 PlayerEntity::PlayerEntity(const std::string& name)
     : LivingEntity(EntityType::Player, name)
@@ -23,6 +26,20 @@ void PlayerEntity::BindPhysics(VoxelPhysics* physics, VoxelBodyID bodyId) {
 void PlayerEntity::Update(float deltaTime) {
     LivingEntity::Update(deltaTime);
 
+    if (_animator) {
+        _animator->Update(deltaTime);
+
+        float horizontalSpeedSq = _velocity.x * _velocity.x + _velocity.z * _velocity.z;
+        bool moving = horizontalSpeedSq > 0.01f;
+        const std::string& current = _animator->GetCurrentClipName();
+
+        if (moving && current != "walking")
+            _animator->Play("walking");
+        else if (!moving && current != "idle")
+            _animator->Play("idle");
+    }
+
+    // Only server has Physics.
     if (!_physics || !_bodyId.IsValid()) return;
 
     // Read authoritative position from physics body
@@ -91,4 +108,12 @@ void PlayerEntity::Respawn() {
     SetPosition(_respawnPosition);
 
     OnRespawn();
+}
+
+RenderData PlayerEntity::GetRenderData() const
+{
+    RenderData rd = _renderData;
+    rd.worldMatrix = _transform.GetWorldMatrix();
+    rd.animator = _animator;
+    return rd;
 }

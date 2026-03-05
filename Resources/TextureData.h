@@ -13,7 +13,7 @@
 #include "Texture.h"
 #include <EngineApi.h>
 
-class ENGINE_API TextureData {
+class TextureData {
 private:
     std::vector<uint8_t> pixels;
     int width;

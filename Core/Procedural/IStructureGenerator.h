@@ -10,7 +10,7 @@
 class Chunk;
 class Scene;
 
-class ENGINE_API IStructureGenerator
+class IStructureGenerator
 {
 public:
     virtual ~IStructureGenerator() = default;

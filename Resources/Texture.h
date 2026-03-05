@@ -15,7 +15,7 @@ enum class TextureFormat {
     R8, RG8, RGB8, RGBA8, R16F, RGBA16F, RGBA32F, Depth24Stencil8, Unknown
 };
 
-class ENGINE_API Texture {
+class Texture {
 protected:
     std::string name;
     std::string filepath;

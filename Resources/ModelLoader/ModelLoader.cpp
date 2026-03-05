@@ -17,6 +17,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 
 // Helper: Convert Assimp types to engine types
@@ -113,13 +114,16 @@ static void BuildSkeletonRecursive(
         inverseBindPose = ToMat4(it->second);
     }
 
+    bool isDeforming = boneOffsetMap.count(nodeName) > 0;
+
     int boneIndex = skeleton.AddBone(
         nodeName,
         parentIndex,
         ToVec3(aiPos),
         ToQuat(aiRot),
         ToVec3(aiScale),
-        inverseBindPose
+        inverseBindPose,
+        isDeforming
     );
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
@@ -396,7 +400,7 @@ ModelLoader::LoadAnimations(const std::string& filepath,
                 matched++;
         }
         std::cout << "ModelLoader: Animation '" << clip->name
-                  << "' — " << matched << "/" << clip->channels.size()
+                  << "' - " << matched << "/" << clip->channels.size()
                   << " channels matched skeleton" << std::endl;
     }
 
@@ -603,6 +607,28 @@ ModelResult ModelLoader::LoadModel(const std::string& filepath) {
 
         std::cout << "ModelLoader::LoadModel: Built skeleton with "
                   << skeleton->GetBoneCount() << " bones" << std::endl;
+
+        // Fix FBX unit mismatch: Assimp may scale mesh data (cm→m) while
+        // leaving node transforms in native units.  Detect by comparing the
+        // first deforming bone's inverseBindPose with the skeleton hierarchy.
+        for (int bi = 0; bi < skeleton->GetBoneCount(); bi++) {
+            const Bone* b = skeleton->GetBone(bi);
+            if (!b->isDeforming) continue;
+
+            Math::Matrix4x4 bindWorld = skeleton->ComputeBindPoseWorld(bi);
+            Math::Matrix4x4 test = b->inverseBindPose * bindWorld;
+            // For correct units: test ≈ Identity → det ≈ 1
+            // For cm/m mismatch: test ≈ Scale(100) → det ≈ 100³
+            float det = test.Determinant();
+            float scaleFactor = std::cbrt(std::abs(det));
+            if (scaleFactor > 1.5f || scaleFactor < 0.67f) {
+                float correction = 1.0f / scaleFactor;
+                skeleton->ApplyRootScale(correction);
+                std::cout << "ModelLoader: FBX unit correction applied ("
+                          << scaleFactor << "x → root scale " << correction << ")" << std::endl;
+            }
+            break;
+        }
 
         // Step 3: Build skinned mesh
         std::vector<SkinnedVertex> allVertices;

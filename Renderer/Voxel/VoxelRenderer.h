@@ -47,14 +47,15 @@ public:
     void SetFrustumCullingEnabled(bool enabled) { _frustumCullingEnabled = enabled; }
     void SetBlockTextureArray(TextureArray* array) { _blockTextures = array; }
     void SetChunkManager(ChunkManager* cm) { _chunkManager = cm; }
+    void SetBlockRegistry(BlockRegistry* br) { _blockRegistry = br; }
     [[nodiscard]] TextureArray* GetBlockTextureArray() const { return _blockTextures; }
     [[nodiscard]] BlockRegistry* GetBlockRegistry() const { return _blockRegistry; }
 private:
-    IRendererApi* _renderer;
-    ShaderCollection* _shaderCollection;
-    BlockRegistry* _blockRegistry;
-    ChunkManager* _chunkManager;
-    TextureArray* _blockTextures;
+    IRendererApi* _renderer                 = nullptr;
+    ShaderCollection* _shaderCollection     = nullptr;
+    BlockRegistry* _blockRegistry           = nullptr;
+    ChunkManager* _chunkManager             = nullptr;
+    TextureArray* _blockTextures            = nullptr;
 
     bool _useGPUMeshing = true;
     bool _frustumCullingEnabled = true;
@@ -64,18 +65,18 @@ private:
     std::queue<Chunk*> _meshQueue;
 
     // Shared GPU resources (meshing)
-    void* _chunkMeshConstantsCB = nullptr;
-    void* _quadIndexBuffer = nullptr;
-    void* _blockTextureMapBuffer = nullptr;
-    void* _blockTextureMapSRV = nullptr;
+    void* _chunkMeshConstantsCB     = nullptr;
+    void* _quadIndexBuffer          = nullptr;
+    void* _blockTextureMapBuffer    = nullptr;
+    void* _blockTextureMapSRV       = nullptr;
 
     // Shared GPU resources (frustum culling)
-    void* _frustumCullCB = nullptr;
-    void* _chunkCullDataBuffer = nullptr;
-    void* _chunkCullDataSRV = nullptr;
-    void* _sharedDrawArgsBuffer = nullptr;
-    void* _sharedDrawArgsUAV = nullptr;
-    void* _counterStagingBuffer = nullptr;
+    void* _frustumCullCB            = nullptr;
+    void* _chunkCullDataBuffer      = nullptr;
+    void* _chunkCullDataSRV         = nullptr;
+    void* _sharedDrawArgsBuffer     = nullptr;
+    void* _sharedDrawArgsUAV        = nullptr;
+    void* _counterStagingBuffer     = nullptr;
 
     bool _cullDataDirty = true;
     Math::Frustum _frustum;

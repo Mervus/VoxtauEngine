@@ -48,14 +48,6 @@ public:
     // Set the camera for this frame
     void SetCamera(Camera* camera);
 
-    // Voxel world
-    void SetVoxelWorld(ChunkManager* chunkManager,
-                       VoxelRenderer* voxelRenderer,
-                       TextureArray* blockTextures);
-
-    void SetVoxelWorld(ChunkManager* chunkManager,
-                       VoxelRenderer* voxelRenderer);
-
     // Distant terrain
     void SetDistantTerrain(DistantTerrainRenderer* distantTerrain);
 
@@ -72,7 +64,7 @@ public:
 
     // Sub-system access
     PostProcessPipeline* GetPostProcessPipeline() { return _postProcessPipeline; }
-    SkyRenderer* GetSky() { return _sky; }
+    SkyRenderer* GetSky() { return _skyRenderer; }
     VoxelRenderer* GetVoxelRenderer() { return _voxelRenderer; }
     EntityRenderer* GetEntityRenderer() { return _entityRenderer; }
 
@@ -80,6 +72,11 @@ public:
     void* GetPerFrameBuffer() { return _perFrameBuffer; }
     void* GetPerObjectBuffer() { return _perObjectBuffer; }
 
+    /**
+     *
+     * @param cm passes it to VoxelRenderer
+     */
+    void SetChunkManager(ChunkManager* cm);
 private:
     IRendererApi* _renderer;
     ShaderCollection* _shaderCollection;
@@ -101,7 +98,7 @@ private:
     // Renderer
     VoxelRenderer* _voxelRenderer = nullptr;
     DistantTerrainRenderer* _distantTerrain = nullptr;
-    SkyRenderer* _sky = nullptr;
+    SkyRenderer* _skyRenderer = nullptr;
     DebugLineRenderer* _debugRenderer = nullptr;
     EntityRenderer* _entityRenderer = nullptr;
 

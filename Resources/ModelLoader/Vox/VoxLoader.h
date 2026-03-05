@@ -9,7 +9,7 @@
 #include <EngineApi.h>
 #include "VoxModel.h"
 
-class ENGINE_API VoxLoader {
+class VoxLoader {
 public:
     // Load a .vox file from disk. Returns true on success.
     static bool Load(const std::string& filepath, VoxModel& outModel);

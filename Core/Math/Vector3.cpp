@@ -5,6 +5,7 @@
 #include "Vector3.h"
 #include "MathTypes.h"
 #include <iostream>
+#include <string>
 
 namespace Math {
     // Static members

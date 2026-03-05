@@ -11,7 +11,7 @@
 #include <EngineApi.h>
 
 namespace Math {
-    class ENGINE_API Vector4 {
+    class Vector4 {
     public:
         float x, y, z, w;
 

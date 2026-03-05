@@ -11,7 +11,7 @@
 #include "ShaderTypes.h"
 #include "EngineApi.h"
 
-class ENGINE_API Shader {
+class Shader {
 protected:
     std::string name;
     std::string filepath;

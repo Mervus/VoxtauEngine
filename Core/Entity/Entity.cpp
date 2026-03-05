@@ -10,8 +10,12 @@ Entity::Entity(EntityType type, const std::string& name)
     , _active(true)
     , _pendingDestroy(false)
     , _name(name)
-    , _entityManager(nullptr)
 {
+}
+
+Entity::Entity(EntityType type, Vector3 spawnPos, const std::string& name) : Entity(type, name)
+{
+    SetPosition(spawnPos);
 }
 
 Entity::~Entity() {

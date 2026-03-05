@@ -3,15 +3,11 @@
 //
 #pragma once
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <iostream>
 #include <DirectXMath.h>
-#ifdef _WIN32
-    #ifdef ENGINE_EXPORTS
-        #define ENGINE_API __declspec(dllexport)
-    #else
-        #define ENGINE_API __declspec(dllimport)
-    #endif
-#endif
 
 constexpr float PI = 3.14159265358979323846f;
 constexpr float TWO_PI = 6.28318530717958647692f;

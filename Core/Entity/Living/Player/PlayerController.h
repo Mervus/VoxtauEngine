@@ -10,17 +10,20 @@
 #include "Core/Entity/EntityID.h"
 #include "Core/Math/Vector3.h"
 
+struct PlayerInputState;
+class ClientSession;
 class InputManager;
 class EntityManager;
 class PlayerEntity;
 class Camera;
 
-class ENGINE_API PlayerController {
+class PlayerController {
 protected:
     EntityManager* _entityManager;
     InputManager* _inputManager;
     Camera* _camera;
     EntityID _playerID;
+    ClientSession* _clientSession; // not owner
 
     // Camera rotation
     float _yaw;
@@ -41,7 +44,7 @@ protected:
     virtual void HandleDebugMovement(float deltaTime);
 
 public:
-    PlayerController(EntityManager* entityManager, InputManager* inputManager, Camera* camera);
+    PlayerController(EntityManager* entityManager, InputManager* inputManager, Camera* camera, ClientSession* clientSession);
     virtual ~PlayerController();
 
     void SetPlayerID(EntityID id) { _playerID = id; }

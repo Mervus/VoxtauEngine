@@ -12,7 +12,7 @@
 #include <cmath>
 namespace Physics
 {
-    struct ENGINE_API AABB {
+    struct AABB {
     Math::Vector3 min;
     Math::Vector3 max;
 

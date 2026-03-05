@@ -124,6 +124,8 @@ Chunk* ChunkManager::CreateChunk(int chunkX, int chunkY, int chunkZ) {
 }
 
 void ChunkManager::GenerateChunkMesh(Chunk* chunk) {
+    assert(chunk);
+    assert(blockRegistry);
     if (!chunk || !blockRegistry) return;
 
     // Create neighbor query that captures this ChunkManager

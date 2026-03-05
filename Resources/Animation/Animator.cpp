@@ -91,7 +91,13 @@ void Animator::Update(float deltaTime) {
         if (channel) {
             pos   = channel->SamplePosition(currentTime);
             rot   = channel->SampleRotation(currentTime);
-            scale = channel->SampleScale(currentTime);
+            // For non-deforming ancestor nodes (Armature, RootNode, etc.),
+            // keep the original node scale.  Their animation channels often
+            // carry a unit-conversion scale that differs from the bind pose,
+            // which would blow up all child bone positions.
+            if (bone.isDeforming) {
+                scale = channel->SampleScale(currentTime);
+            }
         }
 
         // Build local transform: S * R * T (row-vector convention)
@@ -111,4 +117,5 @@ void Animator::Update(float deltaTime) {
         // This transforms a vertex from bind-pose space into current-pose space
         finalBoneMatrices[i] = bone.inverseBindPose * worldTransforms[i];
     }
+
 }

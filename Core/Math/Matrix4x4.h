@@ -11,7 +11,7 @@
 #include <EngineApi.h>
 
 namespace Math {
-    class ENGINE_API Matrix4x4 {
+    class Matrix4x4 {
     public:
         // Row-major order: m[row][column]
         float m[4][4];
