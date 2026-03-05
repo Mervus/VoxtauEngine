@@ -213,7 +213,7 @@ ConnectionID ServerInstance::OnClientConnected(INetworkTransport* transport, Con
             otherProxy->transportConnId, packet, 1, SendMode::Reliable);
     }
 
-    return transportConnId;
+    return connId;
 }
 
 void ServerInstance::OnClientDisconnected(ConnectionID id) {

@@ -20,6 +20,7 @@
 #include "Core/Network/Protocol/InputButton.h"
 #include "Core/Network/Protocol/PacketSerializer.h"
 #include "Core/Voxel/ChunkManager.h"
+#include "Resources/Animation/Animator.h"
 
 // How aggressively the visual position chases the simulation position.
 // 0.1 = smooth (10% per frame), 1.0 = instant snap.

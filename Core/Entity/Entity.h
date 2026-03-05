@@ -53,6 +53,9 @@ public:
     virtual ~Entity();
 
     virtual void OnInit() {};
+    /**
+     * @param deltaTime
+     */
     virtual void Update(float deltaTime) {};
     virtual void LateUpdate(float deltaTime) {};
     virtual void OnDestroy() {};
@@ -89,7 +92,7 @@ public:
     void SetScale(const Math::Vector3& scale) { _transform.SetScale(scale); }
     Math::Vector3 GetScale() const { return _transform.GetScale(); }
 
-    void SetAnimator(Animator* animator) { _animator = animator; }
+    void SetAnimator(Animator* animator) { _animator = std::move(animator); }
     Animator* GetAnimator() { return _animator; }
 
     // State
