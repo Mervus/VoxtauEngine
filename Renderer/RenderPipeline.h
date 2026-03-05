@@ -72,7 +72,11 @@ public:
     void* GetPerFrameBuffer() { return _perFrameBuffer; }
     void* GetPerObjectBuffer() { return _perObjectBuffer; }
 
-    void SetChunkManager(ChunkManager* cm) { _chunkManager = cm; }
+    /**
+     *
+     * @param cm passes it to VoxelRenderer
+     */
+    void SetChunkManager(ChunkManager* cm);
 private:
     IRendererApi* _renderer;
     ShaderCollection* _shaderCollection;

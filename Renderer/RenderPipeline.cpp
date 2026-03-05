@@ -188,6 +188,16 @@ void RenderPipeline::Execute(float deltaTime, float totalTime)
     }
 }
 
+void RenderPipeline::SetChunkManager(ChunkManager* cm)
+{
+    _chunkManager = cm;
+    assert(_voxelRenderer);
+    if (_voxelRenderer)
+    {
+        _voxelRenderer->SetChunkManager(cm);
+    }
+}
+
 // Per-frame constant buffer
 void RenderPipeline::UpdatePerFrameBuffer(float totalTime)
 {
