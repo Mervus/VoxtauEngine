@@ -59,6 +59,11 @@ void Camera::SetPerspective(float fov, float aspect, float near, float far) {
     needsUpdate = true;
 }
 
+void Camera::SetAspectRatio(float aspect) {
+    this->aspectRatio = aspect;
+    needsUpdate = true;
+}
+
 void Camera::UpdateMatrices() {
     if (!needsUpdate) return;
 

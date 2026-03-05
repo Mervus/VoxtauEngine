@@ -232,6 +232,14 @@ void Application::OnResize(int32_t width, int32_t height)
     if (_renderer) {
         _renderer->ResizeBuffers(width, height);
     }
+
+    if (_sceneManager) {
+        Scene* scene = _sceneManager->GetCurrentScene();
+        if (scene && scene->GetMainCamera()) {
+            scene->GetMainCamera()->SetAspectRatio(
+                static_cast<float>(width) / static_cast<float>(height));
+        }
+    }
 }
 
 void Application::Cleanup()
