@@ -92,7 +92,7 @@ public:
     void SetScale(const Math::Vector3& scale) { _transform.SetScale(scale); }
     Math::Vector3 GetScale() const { return _transform.GetScale(); }
 
-    void SetAnimator(Animator* animator) { _animator = std::move(animator); }
+    void SetAnimator(Animator* animator) { _animator = animator; }
     Animator* GetAnimator() { return _animator; }
 
     // State
