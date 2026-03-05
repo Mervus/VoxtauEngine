@@ -138,7 +138,6 @@ void Transform::MarkDirty() {
 }
 
 void Transform::UpdateMatrices() const {
-    // Build local matrix: T * R * S
     Math::Matrix4x4 S = Math::Matrix4x4::Scale(scale);
     Math::Matrix4x4 R = rotation.ToMatrix();
     Math::Matrix4x4 T = Math::Matrix4x4::Translation(position);
@@ -147,7 +146,7 @@ void Transform::UpdateMatrices() const {
     localMatrix = S * R * T;
 
     if (parent) {
-        worldMatrix = localMatrix * parent->GetWorldMatrix();
+        worldMatrix = parent->GetWorldMatrix() * localMatrix;
     } else {
         worldMatrix = localMatrix;
     }
