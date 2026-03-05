@@ -57,12 +57,9 @@ class NetContext
     //  Accessors 
 
     [[nodiscard]] NetMode GetMode() const { return _mode; }
-    bool IsServer() const { return _mode == NetMode::Standalone
-                                || _mode == NetMode::ListenServer
-                                || _mode == NetMode::DedicatedServer; }
+    bool IsServer() const { return _server != nullptr;}
     bool IsClient() const { return _mode != NetMode::DedicatedServer; }
-    bool HasLocalServer() const { return _mode == NetMode::Standalone
-                                      || _mode == NetMode::ListenServer; }
+    bool HasLocalServer() const { return _server != nullptr && (_mode == NetMode::Standalone || _mode == NetMode::ListenServer); }
 
     [[nodiscard]] ServerInstance* GetServer() { return _server.get(); }
     [[nodiscard]] ClientSession* GetClient() { return _client.get(); }
