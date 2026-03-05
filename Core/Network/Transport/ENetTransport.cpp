@@ -52,6 +52,7 @@ bool ENetTransport::Initialize(uint16_t port, uint32_t maxConnections) {
         _host = enet_host_create(&address, maxConnections, CHANNEL_COUNT, 0, 0);
         if (!_host) {
             std::cerr << "[ENet] Failed to create server on port " << port << std::endl;
+            ENetRelease();
             return false;
         }
 
@@ -64,6 +65,7 @@ bool ENetTransport::Initialize(uint16_t port, uint32_t maxConnections) {
         _host = enet_host_create(nullptr, maxConnections, CHANNEL_COUNT, 0, 0);
         if (!_host) {
             std::cerr << "[ENet] Failed to create client host" << std::endl;
+            ENetRelease();
             return false;
         }
 
