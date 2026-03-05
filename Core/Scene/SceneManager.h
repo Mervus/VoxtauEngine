@@ -16,6 +16,7 @@
 class IRendererApi;
 class ShaderCollection;
 class ResourceManager;
+class ClientSession;
 
 class SceneManager {
 private:
