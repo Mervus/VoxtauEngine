@@ -46,7 +46,7 @@ void PlayerController::Update(float deltaTime) {
     if (!player || player->IsDead()) return;
 
     if (player->GetAnimator())
-    {a
+    {
         player->GetAnimator()->Update(deltaTime);
     }
 
