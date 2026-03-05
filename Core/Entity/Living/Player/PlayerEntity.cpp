@@ -97,10 +97,7 @@ void PlayerEntity::Respawn() {
 RenderData PlayerEntity::GetRenderData() const
 {
     RenderData rd = _renderData;
-    rd.worldMatrix = _transform.GetRotation().ToMatrix();
-    rd.worldMatrix.m[3][0] += _transform.GetPosition().x;
-    rd.worldMatrix.m[3][1] += _transform.GetPosition().y;
-    rd.worldMatrix.m[3][2] += _transform.GetPosition().z;
+    rd.worldMatrix = _transform.GetWorldMatrix();
     rd.animator = _animator;
     return rd;
 }
