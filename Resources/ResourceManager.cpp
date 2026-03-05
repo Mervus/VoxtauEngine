@@ -17,6 +17,11 @@ ResourceManager::ResourceManager(IRendererApi* renderer, ShaderCollection* shade
     _blockRegistry = new BlockRegistry();
 }
 
+ResourceManager::~ResourceManager()
+{
+    delete _blockRegistry;
+}
+
 ModelData ResourceManager::LoadModel(const std::string& filepathModel)
 {
     assert(_renderer != nullptr && _shaderCollection != nullptr);

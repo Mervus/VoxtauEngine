@@ -31,6 +31,7 @@ class ResourceManager
 {
 public:
     ResourceManager(IRendererApi* renderer, ShaderCollection* shaderCollection);
+    ~ResourceManager();
 
     ModelData LoadModel(const std::string& filepathModel);
     ModelData LoadModel(const std::string& filepathModel, const std::string& filepathTexture);
