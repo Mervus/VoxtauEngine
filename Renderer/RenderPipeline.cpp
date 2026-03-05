@@ -90,9 +90,22 @@ void RenderPipeline::Shutdown()
         _renderer->DestroyConstantBuffer(_perFrameBuffer);
         _perFrameBuffer = nullptr;
     }
+
     if (_perObjectBuffer) {
         _renderer->DestroyConstantBuffer(_perObjectBuffer);
         _perObjectBuffer = nullptr;
+    }
+
+    if (_skyRenderer)
+    {
+        delete _skyRenderer;
+        _skyRenderer = nullptr;
+    }
+
+    if (_voxelRenderer)
+    {
+        delete _voxelRenderer;
+        _voxelRenderer = nullptr;
     }
 
     if (_entityRenderer)
@@ -124,6 +137,10 @@ void RenderPipeline::SetDistantTerrain(DistantTerrainRenderer* distantTerrain)
 
 void RenderPipeline::SetSkyRenderer(SkyRenderer* sky)
 {
+    if (_skyRenderer)
+    {
+        delete _skyRenderer;
+    }
     _skyRenderer = sky;
 }
 
