@@ -108,6 +108,11 @@ template<typename T, typename... Args>
 EntityID EntityManager::CreateEntityWithID(EntityID id, Args&&... args) {
     static_assert(std::is_base_of_v<Entity, T>, "T must derive from Entity");
 
+    if (id.Get() == 0 || _entities.contains(id))
+    {
+        return EntityID::Invalid;
+    }
+
     auto entity = std::make_unique<T>(std::forward<Args>(args)...);
     entity->_id = id;
     entity->_entityManager = this;
