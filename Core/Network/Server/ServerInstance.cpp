@@ -62,25 +62,10 @@ void ServerInstance::GenerateWorld() {
         return;
     }
 
-    // Phase 1: Set terrain generator for chunk creation
     if (_worldGenerator) {
 
         _chunkManager->SetChunkGenerator(_worldGenerator->GetTerrainGenerator());
     }
-
-    // Phase 2: Create chunk volume
-    for (int y = 0; y < _config.verticalChunks; y++)
-        for (int x = -_config.renderDistance; x < _config.renderDistance; x++)
-            for (int z = -_config.renderDistance; z < _config.renderDistance; z++)
-                _chunkManager->CreateChunk(x, y, z);
-
-    if (_worldGenerator) {
-        _worldGenerator->Generate(_chunkManager.get());
-    }
-
-    std::cout << "[Server] Generating world (seed=" << _config.worldSeed
-              << ", radius=" << _config.renderDistance
-              << ", height=" << _config.verticalChunks << ")" << std::endl;
 
     // Create initial chunk volume
     for (int y = 0; y < _config.verticalChunks; y++) {
@@ -90,6 +75,15 @@ void ServerInstance::GenerateWorld() {
             }
         }
     }
+
+    if (_worldGenerator) {
+        _worldGenerator->Generate(_chunkManager.get());
+    }
+
+    std::cout << "[Server] Generating world (seed=" << _config.worldSeed
+              << ", radius=" << _config.renderDistance
+              << ", height=" << _config.verticalChunks << ")" << std::endl;
+
 
     std::cout << "[Server] World generated ("
               << _chunkManager->GetChunks().size() << " chunks)" << std::endl;
