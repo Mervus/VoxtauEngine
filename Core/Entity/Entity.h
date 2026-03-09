@@ -14,6 +14,8 @@
 #include "Resources/Texture.h"
 #include "Resources/TextureArray.h"
 
+#include "Core/Network/Replication/Repfield.h"
+
 class Animator;
 class EntityManager;
 
@@ -32,6 +34,14 @@ struct RenderData {
 class Entity
 {
     friend class EntityManager;
+protected:
+    std::vector<IRepField*> _repFields;
+    static thread_local Entity* _constructing;
+
+public:
+    Rep<Vector3, Scope::All>  position{{0,0,0}};
+    Rep<Vector3, Scope::All>  velocity{{0,0,0}};
+    Rep<float, Scope::All>    yaw{0.0f};
 
 private:
     EntityID _id;
@@ -99,6 +109,8 @@ public:
     bool IsActive() const { return _active; }
     void SetActive(bool active) { _active = active; }
     bool IsPendingDestroy() const { return _pendingDestroy; }
+
+
 };
 
 
