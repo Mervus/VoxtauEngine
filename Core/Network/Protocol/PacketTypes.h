@@ -16,6 +16,7 @@ enum class PacketType : uint8_t {
     BlockChangeRequest  = 0x02,  // Position + block type (reliable)
     ChatMessage         = 0x03,  // Text (reliable)
     ClientReady         = 0x04,  // Client finished loading, ready to receive snapshots
+    SnapshotAck         = 0x05,
 
     // Server -> Client
     Snapshot            = 0x10,  // ServerSnapshot (sent at network rate, unreliable)

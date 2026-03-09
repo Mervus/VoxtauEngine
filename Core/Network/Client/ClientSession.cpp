@@ -199,7 +199,7 @@ Math::Vector3 ClientSession::GetEntityPosition(EntityID id) const {
 }
 
 float ClientSession::GetEntityYaw(EntityID id) const {
-    if (_interpolator) return _interpolator->GetRotation(id).x;
+    if (_interpolator) return _interpolator->GetRotation(id).ToEulerAngles().y;
     return 0.0f;
 }
 
@@ -306,7 +306,7 @@ void ClientSession::ProcessServerSnapshots() {
                                 entity->DeserializeScope(reader, Scope::Owner);
                             }
 
-                            if (entity->GetType() == EntityType::Player || entity->GetType() == NPC || entity->GetType() == Monster)
+                            if (entity->GetType() == EntityType::Player || entity->GetType() == EntityType::NPC || entity->GetType() == EntityType::Monster)
                             {
                                 LivingEntity* living = dynamic_cast<LivingEntity*>(entity);
                                 // Push to interpolator for smooth rendering
@@ -318,6 +318,11 @@ void ClientSession::ProcessServerSnapshots() {
                             entity->SyncTransform();
                         }
                     }
+
+                    BitWriter ack;
+                    ack.Write(static_cast<uint8_t>(PacketType::SnapshotAck));
+                    ack.Write(serverTick);
+                    _transport->SendPacket(_serverConnectionId, ack.Buffer(), 1, SendMode::Reliable);
                     break;
             }
 

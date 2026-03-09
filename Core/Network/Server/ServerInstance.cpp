@@ -292,6 +292,15 @@ void ServerInstance::ProcessIncomingPackets() {
                         break;
                 }
 
+                case PacketType::SnapshotAck: {
+                        if (event.data.size() >= 5) {
+                            size_t offset = 1;
+                            uint32_t ackedTick = PacketSerializer::ReadU32(event.data.data(), offset);
+                            _entityReplicator->AcknowledgeTick(proxy->connectionId, ackedTick);
+                        }
+                    break;
+                }
+
                 default:
                     break;
                 }
