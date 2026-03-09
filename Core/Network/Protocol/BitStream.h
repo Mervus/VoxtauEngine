@@ -14,6 +14,8 @@
 #include <span>
 
 #include "Core/Math/Vector3.h"
+#include "Core/Math/Quaternion.h"
+
 #include "Core/Entity/EntityID.h"
 
 // BitWriter serialize into a growable buffer
@@ -106,6 +108,49 @@ public:
     }
 
     /**
+    * Compressed quaternion 7 bytes, smallest-three encoding.
+    * Drops the largest component (reconstructable since |q|=1),
+    * quantizes the remaining three to uint16 each.
+    * Layout: [1 byte: 2-bit index + 6 unused] [3x uint16: components]
+    */
+    void WriteCompressedQuat(const Math::Quaternion& q) {
+        // Ensure positive w hemisphere (q and -q represent the same rotation)
+        Math::Quaternion v = q;
+        if (v.w < 0.0f) { v.x = -v.x; v.y = -v.y; v.z = -v.z; v.w = -v.w; }
+
+        // Find largest component
+        float components[4] = { v.x, v.y, v.z, v.w };
+        uint8_t largestIndex = 0;
+        float largestAbs = std::abs(components[0]);
+        for (uint8_t i = 1; i < 4; i++) {
+            float a = std::abs(components[i]);
+            if (a > largestAbs) { largestAbs = a; largestIndex = i; }
+        }
+
+        // Collect the 3 smallest components
+        // Each is in [-1/sqrt(2), 1/sqrt(2)] ≈ [-0.7071, 0.7071]
+        float smallest[3];
+        int si = 0;
+        for (uint8_t i = 0; i < 4; i++) {
+            if (i != largestIndex) smallest[si++] = components[i];
+        }
+
+        // Quantize to uint16: map [-0.7071, 0.7071] -> [0, 65535]
+        constexpr float RANGE = 0.70710678118f; // 1/sqrt(2)
+        auto Quantize = [](float val, float range) -> uint16_t {
+            float normalized = (val + range) / (2.0f * range); // [0, 1]
+            if (normalized < 0.0f) normalized = 0.0f;
+            if (normalized > 1.0f) normalized = 1.0f;
+            return static_cast<uint16_t>(normalized * 65535.0f + 0.5f);
+        };
+
+        Write(largestIndex);                    // 1 byte
+        Write(Quantize(smallest[0], RANGE));    // 2 bytes
+        Write(Quantize(smallest[1], RANGE));    // 2 bytes
+        Write(Quantize(smallest[2], RANGE));    // 2 bytes
+    }
+
+    /**
     * Generic write
     * Fallback for any trivially_copyable type not covered above.
     * This is what makes Rep<SomeCustomStruct, Scope::All> work
@@ -163,7 +208,7 @@ public:
     BitReader(const uint8_t* data, size_t size)
         : _data(data), _size(size), _offset(0) {}
 
-    // Construct from a vector (non-owning  vector must outlive reader)
+    // Construct from a vector (non-owning vector must outlive reader)
     explicit BitReader(const std::vector<uint8_t>& buffer)
         : _data(buffer.data()), _size(buffer.size()), _offset(0) {}
 
@@ -231,6 +276,58 @@ public:
         Read(raw);
         v = EntityID(raw);
     }
+
+    void Read(Math::Quaternion& v) {
+        Read(v.x);
+        Read(v.y);
+        Read(v.z);
+        Read(v.w);
+    }
+    void ReadCompressedQuat(Math::Quaternion& q) {
+        uint8_t largestIndex;
+        uint16_t a, b, c;
+        Read(largestIndex);
+        Read(a);
+        Read(b);
+        Read(c);
+
+        // Dequantize: [0, 65535] -> [-0.7071, 0.7071]
+        constexpr float RANGE = 0.70710678118f;
+        auto Dequantize = [](uint16_t val, float range) -> float {
+            float normalized = static_cast<float>(val) / 65535.0f; // [0, 1]
+            return normalized * 2.0f * range - range;
+        };
+
+        float smallest[3] = {
+            Dequantize(a, RANGE),
+            Dequantize(b, RANGE),
+            Dequantize(c, RANGE)
+        };
+
+        // Reconstruct the dropped component:
+        // |q| = 1, so dropped = sqrt(1 - a² - b² - c²)
+        float sumSq = smallest[0] * smallest[0]
+                     + smallest[1] * smallest[1]
+                     + smallest[2] * smallest[2];
+        float dropped = (sumSq < 1.0f) ? std::sqrt(1.0f - sumSq) : 0.0f;
+
+        // Rebuild the 4 components
+        float components[4];
+        int si = 0;
+        for (int i = 0; i < 4; i++) {
+            if (i == largestIndex) {
+                components[i] = dropped;
+            } else {
+                components[i] = smallest[si++];
+            }
+        }
+
+        q.x = components[0];
+        q.y = components[1];
+        q.z = components[2];
+        q.w = components[3];
+    }
+
 
     //  Generic read 
     template<typename T>

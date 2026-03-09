@@ -140,12 +140,9 @@ void ClientSession::Tick(float deltaTime) {
                 if (e->GetID() == _localPlayerEntity) return;
                 if (!_interpolator->HasEntity(e->GetID())) return;
                 e->SetPosition(_interpolator->GetPosition(e->GetID()));
+                e->SetRotation(_interpolator->GetRotation(e->GetID()));
                 if (auto* living = dynamic_cast<LivingEntity*>(e)) {
-                    Vector3 vel = _interpolator->GetVelocity(e->GetID());
-                    living->SetVelocity(vel);
-
-                    float moveYaw = std::atan2(vel.x, vel.z);
-                    living->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(0, moveYaw, 0)));
+                    living->SetVelocity(_interpolator->GetVelocity(e->GetID()));
                 }
             });
         }
@@ -202,7 +199,7 @@ Math::Vector3 ClientSession::GetEntityPosition(EntityID id) const {
 }
 
 float ClientSession::GetEntityYaw(EntityID id) const {
-    if (_interpolator) return _interpolator->GetYaw(id);
+    if (_interpolator) return _interpolator->GetRotation(id).x;
     return 0.0f;
 }
 
@@ -259,12 +256,66 @@ void ClientSession::ProcessServerSnapshots() {
             switch (type) {
 
             case PacketType::Snapshot: {
-                    ServerSnapshot snapshot;
-                    if (PacketSerializer::DeserializeSnapshot(event.data, snapshot)) {
-                        Reconcile(snapshot);
-                        float timestamp = static_cast<float>(snapshot.serverTick) / 60.0f;
-                        for (const auto& e : snapshot.entities) {
-                            _interpolator->PushState(e.id, timestamp, e);
+                    BitReader reader(event.data.data() + 1, event.data.size() - 1); // skip packet type byte
+
+                    uint32_t serverTick = reader.Read<uint32_t>();
+                    uint32_t lastProcessedInput = reader.Read<uint32_t>();
+                    uint32_t worldStateVersion = reader.Read<uint32_t>();
+
+                    Math::Vector3 playerPosition;
+                    Math::Vector3 playerVelocity;
+                    bool playerOnGround;
+                    reader.Read(playerPosition);
+                    reader.Read(playerVelocity);
+                    reader.Read(playerOnGround);
+
+                    ServerSnapshot snapshot{
+                        serverTick, lastProcessedInput, worldStateVersion, playerPosition, playerVelocity, playerOnGround
+                    };
+
+                    Reconcile(snapshot);
+
+                    float timestamp = static_cast<float>(serverTick) / 60.0f;
+
+                    while (!reader.IsEnd() && !reader.HasError()) {
+                        uint32_t rawId = reader.Read<uint32_t>();
+                        if (rawId == 0) break; // sentinel
+
+                        EntityID id(rawId);
+                        EntityType type = static_cast<EntityType>(reader.Read<uint8_t>());
+
+                        // Find or create entity in local EntityManager
+                        Entity* entity = _localEntityManager->GetEntity(id);
+                        if (!entity) {
+                            // New entity — spawn it
+                            // (or queue a spawn request depending on your flow)
+                            _localEntityManager->CreateEntityWithID<PlayerEntity>(id, "RemotePlayer");
+                            entity = _localEntityManager->GetEntity(id);
+                            if (entity && OnRemoteEntitySpawned) {
+                                OnRemoteEntitySpawned(id, type);
+                            }
+                        }
+
+                        if (entity) {
+                            // Deserialize Scope::All fields directly into the entity's Rep<> fields
+                            entity->DeserializeScope(reader, Scope::All);
+
+                            // Check if Owner-scope fields follow
+                            bool hasOwner = reader.Read<bool>();
+                            if (hasOwner) {
+                                entity->DeserializeScope(reader, Scope::Owner);
+                            }
+
+                            if (entity->GetType() == EntityType::Player || entity->GetType() == NPC || entity->GetType() == Monster)
+                            {
+                                LivingEntity* living = dynamic_cast<LivingEntity*>(entity);
+                                // Push to interpolator for smooth rendering
+                                _interpolator->PushState(id, timestamp, living->GetPosition(), living->GetVelocity(), living->GetRotation());
+
+                            }
+
+                            // Sync Rep fields -> Transform for rendering
+                            entity->SyncTransform();
                         }
                     }
                     break;

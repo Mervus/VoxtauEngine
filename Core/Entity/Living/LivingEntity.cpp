@@ -8,12 +8,11 @@
 LivingEntity::LivingEntity(EntityType type, const std::string& name)
     : Entity(type, name)
     , _currentHealth(100.0f)
-    , _currentMana(50.0f)
     , _isDead(false)
     , _maxHealth(100.0f)
     , _maxMana(50.0f)
     , _moveSpeed(2.5f)
-    , _velocity(0,0,0)
+    , _velocity(Vector3::Zero)
 {
 }
 

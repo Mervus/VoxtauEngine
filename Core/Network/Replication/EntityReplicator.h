@@ -10,79 +10,105 @@
 #include <vector>
 #include <cstdint>
 #include "Core/Entity/EntityID.h"
-#include "Core/Entity/EntityType.h"
-#include "Core/Network/Protocol/ServerSnapshot.h"
+#include "Core/Network/Replication/RepField.h"
 
 class EntityManager;
 class Entity;
-class LivingEntity;
+class BitWriter;
 
 using ConnectionID = uint32_t;
-
-// Dirty flag bits — one per replicated field in ReplicatedEntityState.
-// Used for delta compression: only send fields that changed since the
-// client's last acknowledged baseline.
-namespace DirtyFlag {
-    constexpr uint32_t Position      = 1 << 0;
-    constexpr uint32_t Velocity      = 1 << 1;
-    constexpr uint32_t Yaw           = 1 << 2;
-    constexpr uint32_t Health        = 1 << 3;
-    constexpr uint32_t MaxHealth     = 1 << 4;
-    constexpr uint32_t IsDead        = 1 << 5;
-    constexpr uint32_t MovementState = 1 << 6;
-    constexpr uint32_t AnimationId   = 1 << 7;
-    constexpr uint32_t All           = 0xFFFFFFFF;
-}
 
 class EntityReplicator {
 public:
     EntityReplicator();
     ~EntityReplicator();
 
-    // Per-tick: build snapshots
+    
+    // Per-tick: serialize entity state for one client
 
-    // Build the entity portion of a ServerSnapshot for a specific client.
-    // Compares current entity state against that client's baseline,
-    // only includes entities within AOI, marks dirty flags per entity.
-    void BuildSnapshot(ConnectionID client,
-                       const EntityManager* entityManager,
-                       EntityID excludeEntity,          // client's own player
-                       const Math::Vector3& viewCenter, // client's position (for AOI)
-                       float viewRadius,                // how far they can see
-                       std::vector<ReplicatedEntityState>& outEntities);
+    /**
+    Writes all visible entity state into the BitWriter.
+    Handles AOI filtering, scope selection, and delta compression.
 
-    // Baseline management
+    For each entity in AOI (excluding ownerEntity):
+      - Serializes Scope::All fields
+      - Compares against confirmed baseline, skips if unchanged
+    For ownerEntity:
+      - Also serializes Scope::Owner fields
+
+    Wire format per entity:
+      [EntityID]    4 bytes
+      [EntityType]  1 byte
+      [Scope::All serialized fields]
+      [Scope::Owner serialized fields]  (only for owner entity)
+
+    Packet ends with EntityID(0) sentinel.
+     * @param client
+     * @param entityManager
+     * @param ownerEntity
+     * @param viewCenter
+     * @param viewRadius
+     * @param serverTick
+     * @param writer
+     */
+    void SerializeEntitiesForClient(ConnectionID client,
+                                    const EntityManager* entityManager,
+                                    EntityID ownerEntity,
+                                    const Math::Vector3& viewCenter,
+                                    float viewRadius,
+                                    uint32_t serverTick,
+                                    BitWriter& writer);
 
     // Client acknowledged receiving snapshot at this tick.
-    // Promote pending baselines to confirmed for this client.
+    // Promote pending baselines to confirmed.
     void AcknowledgeTick(ConnectionID client, uint32_t tick);
 
-    // Client disconnected — clean up all their baselines.
+    // Register which entity a client owns (for Scope::Owner fields).
+    void SetClientOwner(ConnectionID client, EntityID ownerEntity);
+
+    // Client disconnected — clean up all their data.
     void RemoveClient(ConnectionID client);
 
     // Entity destroyed — remove from all client baselines.
     void OnEntityDestroyed(EntityID entity);
 
+
 private:
-    // Per-client, per-entity: the last state the client acknowledged receiving.
-    // We diff against this to determine what's dirty.
-    struct ClientBaselines {
-        std::unordered_map<EntityID, ReplicatedEntityState> confirmed;
-        // Pending: sent but not yet acked. Promoted on ack.
-        std::unordered_map<EntityID, ReplicatedEntityState> pending;
-        uint32_t pendingTick = 0;
+    /** Per-entity baseline: raw bytes for each scope */
+    struct EntityBaseline {
+        /** Scope::All fields, serialized */
+        std::vector<uint8_t> publicState;
+        /** Scope::Owner fields, serialized */
+        std::vector<uint8_t> ownerState;
     };
 
-    std::unordered_map<ConnectionID, ClientBaselines> _clientData;
+    struct ClientData {
+        // Confirmed: client has acked receiving this state.
+        // Delta is computed against confirmed baselines.
+        std::unordered_map<EntityID, EntityBaseline> confirmed;
 
-    // Internal
+        // Pending: sent but not yet acked.
+        // Promoted to confirmed when client acks the tick.
+        std::unordered_map<EntityID, EntityBaseline> pending;
 
-    // Snapshot the current state of an entity into a ReplicatedEntityState.
-    ReplicatedEntityState CaptureEntityState(const Entity* entity) const;
+        // Which tick the pending data was sent on.
+        uint32_t pendingTick = 0;
 
-    // Compare two states and return a dirty bitmask.
-    uint32_t ComputeDirtyFlags(const ReplicatedEntityState& baseline,
-                                const ReplicatedEntityState& current) const;
+        // Which entity this client owns (receives Scope::Owner fields).
+        EntityID ownerEntity;
+    };
+
+    std::unordered_map<ConnectionID, ClientData> _clientData;
+
+    //  Internal helpers 
+
+    // Serialize an entity's fields for a given scope into a byte buffer.
+    // Returns the serialized bytes.
+    static std::vector<uint8_t> CaptureScope(const Entity* entity, Scope scope);
+
+    // Compare two byte buffers. Returns true if identical.
+    static bool BaselinesMatch(const std::vector<uint8_t>& a,
+                                const std::vector<uint8_t>& b);
 };
 
 #endif //VOXTAU_ENTITYREPLICATOR_H

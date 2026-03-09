@@ -14,15 +14,12 @@
 #include "../Renderer/Vertex.h"
 #include "../Core/Math/Vector3.h"
 
-
-using Math::Vector3;
-
 struct AABB {
-    Vector3 minBounds;
-    Vector3 maxBounds;
+    Math::Vector3 minBounds;
+    Math::Vector3 maxBounds;
 
     AABB() : minBounds(0, 0, 0), maxBounds(0, 0, 0) {}
-    AABB(const Vector3& min, const Vector3& max) : minBounds(min), maxBounds(max) {}
+    AABB(const Math::Vector3& min, const Math::Vector3& max) : minBounds(min), maxBounds(max) {}
 };
 
 // Describes a single element of an input layout (renderer-agnostic)

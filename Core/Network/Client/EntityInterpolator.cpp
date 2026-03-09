@@ -17,9 +17,15 @@ void EntityInterpolator::Update(float deltaTime) {
 
 // Data Input
 
-void EntityInterpolator::PushState(EntityID id, float timestamp,
-                                    const ReplicatedEntityState& state) {
-    _entities[id].Push(timestamp, state);
+void EntityInterpolator::PushState(EntityID id, float timestamp, Math::Vector3 position, Math::Vector3 velocity, Math::Quaternion rotation) {
+    auto& buffer = _entities[id];
+    auto& entry = buffer.entries[buffer.head];
+    entry.timestamp = timestamp;
+    entry.position = position;
+    entry.velocity = velocity;
+    entry.rotation = rotation;
+    buffer.head = (buffer.head + 1) % EntityBuffer::MAX_ENTRIES;
+    if (buffer.count < EntityBuffer::MAX_ENTRIES) buffer.count++;
 }
 
 void EntityInterpolator::RemoveEntity(EntityID id) {
@@ -40,7 +46,7 @@ Math::Vector3 EntityInterpolator::GetPosition(EntityID id) const {
         // Not enough data — return latest known position
         if (it->second.count > 0) {
             size_t latest = (it->second.head + it->second.MAX_ENTRIES - 1) % it->second.MAX_ENTRIES;
-            return it->second.entries[latest].state.position;
+            return it->second.entries[latest].position;
         }
         return Math::Vector3();
     }
@@ -52,7 +58,7 @@ Math::Vector3 EntityInterpolator::GetPosition(EntityID id) const {
         : 0.0f;
     t = std::clamp(t, 0.0f, 1.0f);
 
-    return Lerp(before->state.position, after->state.position, t);
+    return Lerp(before->position, after->position, t);
 }
 
 Math::Vector3 EntityInterpolator::GetVelocity(EntityID id) const {
@@ -64,6 +70,11 @@ Math::Vector3 EntityInterpolator::GetVelocity(EntityID id) const {
     float renderTime = GetRenderTime();
 
     if (!it->second.FindBracket(renderTime, before, after)) {
+        // Return latest known velocity instead of zero
+        if (it->second.count > 0) {
+            size_t latest = (it->second.head + it->second.MAX_ENTRIES - 1) % it->second.MAX_ENTRIES;
+            return it->second.entries[latest].velocity;
+        }
         return Math::Vector3();
     }
 
@@ -73,12 +84,12 @@ Math::Vector3 EntityInterpolator::GetVelocity(EntityID id) const {
         : 0.0f;
     t = std::clamp(t, 0.0f, 1.0f);
 
-    return Lerp(before->state.velocity, after->state.velocity, t);
+    return Lerp(before->velocity, after->velocity, t);
 }
 
-float EntityInterpolator::GetYaw(EntityID id) const {
+Math::Quaternion EntityInterpolator::GetRotation(EntityID id) const {
     auto it = _entities.find(id);
-    if (it == _entities.end()) return 0.0f;
+    if (it == _entities.end()) return Math::Quaternion::Identity;
 
     const SnapshotEntry* before = nullptr;
     const SnapshotEntry* after = nullptr;
@@ -86,10 +97,11 @@ float EntityInterpolator::GetYaw(EntityID id) const {
 
     if (!it->second.FindBracket(renderTime, before, after)) {
         if (it->second.count > 0) {
-            size_t latest = (it->second.head + it->second.MAX_ENTRIES - 1) % it->second.MAX_ENTRIES;
-            return it->second.entries[latest].state.yaw;
+            size_t latest = (it->second.head + it->second.MAX_ENTRIES - 1)
+                            % it->second.MAX_ENTRIES;
+            return it->second.entries[latest].rotation;
         }
-        return 0.0f;
+        return Math::Quaternion::Identity;
     }
 
     float range = after->timestamp - before->timestamp;
@@ -98,77 +110,36 @@ float EntityInterpolator::GetYaw(EntityID id) const {
         : 0.0f;
     t = std::clamp(t, 0.0f, 1.0f);
 
-    return LerpAngle(before->state.yaw, after->state.yaw, t);
+    return Math::Quaternion::Slerp(before->rotation, after->rotation, t);
 }
 
-float EntityInterpolator::GetHealth(EntityID id) const {
-    // Health doesn't interpolate smoothly — snap to latest
-    auto it = _entities.find(id);
-    if (it == _entities.end()) return 0.0f;
-    if (it->second.count == 0) return 0.0f;
-
-    size_t latest = (it->second.head + it->second.MAX_ENTRIES - 1) % it->second.MAX_ENTRIES;
-    return it->second.entries[latest].state.health;
-}
-
-bool EntityInterpolator::HasEntity(EntityID id) const {
-    return _entities.find(id) != _entities.end();
-}
-
-//  EntityBuffer 
-
-void EntityInterpolator::EntityBuffer::Push(float timestamp,
-                                             const ReplicatedEntityState& state) {
-    entries[head].timestamp = timestamp;
-    entries[head].state = state;
-    head = (head + 1) % MAX_ENTRIES;
-    if (count < MAX_ENTRIES) count++;
-}
-
-bool EntityInterpolator::EntityBuffer::FindBracket(
-        float renderTime,
-        const SnapshotEntry*& before,
-        const SnapshotEntry*& after) const {
-
+bool EntityInterpolator::EntityBuffer::FindBracket(float renderTime,
+                                                    const SnapshotEntry*& before,
+                                                    const SnapshotEntry*& after) const {
     if (count < 2) return false;
 
-    // Walk through entries chronologically to find the pair
-    // that brackets renderTime: before.timestamp <= renderTime <= after.timestamp
-    //
-    // Entries are in ring buffer order. The oldest entry is at
-    // (head - count) % MAX_ENTRIES, newest at (head - 1) % MAX_ENTRIES.
-
+    // Walk the ring buffer in chronological order and find the two entries
+    // that straddle renderTime (before.timestamp <= renderTime <= after.timestamp).
     size_t oldest = (head + MAX_ENTRIES - count) % MAX_ENTRIES;
 
-    const SnapshotEntry* prev = nullptr;
+    for (size_t i = 0; i + 1 < count; ++i) {
+        size_t idxA = (oldest + i)     % MAX_ENTRIES;
+        size_t idxB = (oldest + i + 1) % MAX_ENTRIES;
 
-    for (size_t i = 0; i < count; i++) {
-        size_t idx = (oldest + i) % MAX_ENTRIES;
-        const SnapshotEntry* current = &entries[idx];
-
-        if (prev && prev->timestamp <= renderTime && current->timestamp >= renderTime) {
-            before = prev;
-            after = current;
+        if (entries[idxA].timestamp <= renderTime &&
+            renderTime <= entries[idxB].timestamp) {
+            before = &entries[idxA];
+            after  = &entries[idxB];
             return true;
         }
-
-        prev = current;
-    }
-
-    // renderTime is beyond our newest snapshot — extrapolation case.
-    // Return the last two entries and let the caller clamp t to 1.0.
-    if (prev && count >= 2) {
-        size_t secondLast = (head + MAX_ENTRIES - 2) % MAX_ENTRIES;
-        size_t last = (head + MAX_ENTRIES - 1) % MAX_ENTRIES;
-        before = &entries[secondLast];
-        after = &entries[last];
-        return true;
     }
 
     return false;
 }
 
-//  Helpers 
+bool EntityInterpolator::HasEntity(EntityID id) const {
+    return _entities.find(id) != _entities.end();
+}
 
 Math::Vector3 EntityInterpolator::Lerp(const Math::Vector3& a,
                                         const Math::Vector3& b, float t) {

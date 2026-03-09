@@ -24,6 +24,7 @@
 #include <cstring>
 #include <type_traits>
 
+struct IRepField;
 // Forward declarations engine provides these
 class BitWriter;
 class BitReader;
@@ -48,7 +49,7 @@ enum class Scope : uint8_t {
  *   This avoids coupling Rep<> to the Entity class directly.
  */
 namespace RepContext {
-    inline thread_local std::vector<struct IRepField*>* activeFieldList = nullptr;
+    inline thread_local std::vector<IRepField*>* activeFieldList = nullptr;
 }
 
 /**

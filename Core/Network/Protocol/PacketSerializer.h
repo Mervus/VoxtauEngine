@@ -14,7 +14,6 @@
 #include "PlayerInputState.h"
 #include "Core/Entity/EntityID.h"
 #include "Core/Math/Vector3.h"
-#include "Core/Network/Replication/EntityReplicator.h"
 #include "Core/Voxel/Chunk.h"
 
 // Simple binary serializer. Writes/reads raw bytes.
@@ -92,84 +91,7 @@ public:
         return data[offset++] != 0;
     }
 
-    //  ServerSnapshot 
-
-    static std::vector<uint8_t> SerializeSnapshot(const ServerSnapshot& snapshot) {
-        std::vector<uint8_t> buf;
-        buf.reserve(256);
-
-        WriteU8(buf, static_cast<uint8_t>(PacketType::Snapshot));
-
-        // Header
-        WriteU32(buf, snapshot.serverTick);
-        WriteU32(buf, snapshot.lastProcessedInput);
-        WriteU32(buf, snapshot.worldStateVersion);
-
-        // Local player state
-        WriteVec3(buf, snapshot.playerPosition);
-        WriteVec3(buf, snapshot.playerVelocity);
-        WriteBool(buf, snapshot.playerOnGround);
-
-        // Entity count
-        WriteU16(buf, static_cast<uint16_t>(snapshot.entities.size()));
-
-        // Each entity — only write dirty fields
-        for (const auto& e : snapshot.entities) {
-            WriteU32(buf, e.id.Get());
-            WriteU8(buf, static_cast<uint8_t>(e.type));
-            WriteU32(buf, e.dirtyFlags);
-
-            if (e.dirtyFlags & DirtyFlag::Position)      WriteVec3(buf, e.position);
-            if (e.dirtyFlags & DirtyFlag::Velocity)      WriteVec3(buf, e.velocity);
-            if (e.dirtyFlags & DirtyFlag::Yaw)           WriteFloat(buf, e.yaw);
-            if (e.dirtyFlags & DirtyFlag::Health)        WriteFloat(buf, e.health);
-            if (e.dirtyFlags & DirtyFlag::MaxHealth)     WriteFloat(buf, e.maxHealth);
-            if (e.dirtyFlags & DirtyFlag::IsDead)        WriteBool(buf, e.isDead);
-            if (e.dirtyFlags & DirtyFlag::MovementState) WriteU8(buf, e.movementState);
-            if (e.dirtyFlags & DirtyFlag::AnimationId)   WriteU8(buf, e.animationId);
-        }
-
-        return buf;
-    }
-
-    static bool DeserializeSnapshot(const std::vector<uint8_t>& data, ServerSnapshot& out) {
-        if (data.size() < 2) return false;
-
-        size_t offset = 1; // skip packet type byte
-
-        out.serverTick          = ReadU32(data.data(), offset);
-        out.lastProcessedInput  = ReadU32(data.data(), offset);
-        out.worldStateVersion   = ReadU32(data.data(), offset);
-
-        out.playerPosition  = ReadVec3(data.data(), offset);
-        out.playerVelocity  = ReadVec3(data.data(), offset);
-        out.playerOnGround  = ReadBool(data.data(), offset);
-
-        uint16_t entityCount = ReadU16(data.data(), offset);
-        out.entities.resize(entityCount);
-
-        for (uint16_t i = 0; i < entityCount; i++) {
-            auto& e = out.entities[i];
-
-            e.id         = EntityID(ReadU32(data.data(), offset));
-            e.type       = static_cast<EntityType>(ReadU8(data.data(), offset));
-            e.dirtyFlags = ReadU32(data.data(), offset);
-
-            if (e.dirtyFlags & DirtyFlag::Position)      e.position      = ReadVec3(data.data(), offset);
-            if (e.dirtyFlags & DirtyFlag::Velocity)      e.velocity      = ReadVec3(data.data(), offset);
-            if (e.dirtyFlags & DirtyFlag::Yaw)           e.yaw           = ReadFloat(data.data(), offset);
-            if (e.dirtyFlags & DirtyFlag::Health)        e.health        = ReadFloat(data.data(), offset);
-            if (e.dirtyFlags & DirtyFlag::MaxHealth)     e.maxHealth     = ReadFloat(data.data(), offset);
-            if (e.dirtyFlags & DirtyFlag::IsDead)        e.isDead        = ReadBool(data.data(), offset);
-            if (e.dirtyFlags & DirtyFlag::MovementState) e.movementState = ReadU8(data.data(), offset);
-            if (e.dirtyFlags & DirtyFlag::AnimationId)   e.animationId   = ReadU8(data.data(), offset);
-        }
-
-        return true;
-    }
-
-    //  PlayerInputState 
-
+    //  PlayerInputState
     static std::vector<uint8_t> SerializeInput(const PlayerInputState& input) {
         std::vector<uint8_t> buf;
         buf.reserve(32);

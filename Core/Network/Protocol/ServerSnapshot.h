@@ -51,16 +51,5 @@ struct ServerSnapshot {
     Math::Vector3 playerPosition;
     Math::Vector3 playerVelocity;
     bool playerOnGround = false;
-
-    // Visible entities
-    // Only entities within this client's area of interest
-    // Excludes the client's own player (that's above)
-    std::vector<ReplicatedEntityState> entities;
-
-    // Entity lifecycle events (reliable, sent separately)
-    // These would normally be on a reliable channel, not in the snapshot.
-    // Listed here for completeness — in practice they're separate packets.
-    // std::vector<EntityID> spawned;
-    // std::vector<EntityID> despawned;
 };
 #endif //VOXTAU_SERVERSNAPSHOT_H

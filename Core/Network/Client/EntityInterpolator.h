@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <cstdint>
 #include "Core/Entity/EntityID.h"
+#include "Core/Math/Quaternion.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Network/Protocol/ServerSnapshot.h"
 
@@ -35,7 +36,7 @@ public:
 
     // Push a new state for an entity from a server snapshot.
     // Timestamp is the server time (or tick converted to time).
-    void PushState(EntityID id, float timestamp, const ReplicatedEntityState& state);
+    void PushState(EntityID id, float timestamp, Math::Vector3 position, Math::Vector3 velocity, Math::Quaternion rotation);
 
     // Entity left our area of interest — stop tracking.
     void RemoveEntity(EntityID id);
@@ -44,16 +45,18 @@ public:
 
     [[nodiscard]] Math::Vector3 GetPosition(EntityID id) const;
     [[nodiscard]] Math::Vector3 GetVelocity(EntityID id) const;
-    [[nodiscard]] float GetYaw(EntityID id) const;
-    [[nodiscard]] float GetHealth(EntityID id) const;
+    [[nodiscard]] Math::Quaternion GetRotation(EntityID id) const;
     [[nodiscard]] bool HasEntity(EntityID id) const;
+    [[nodiscard]] float GetCurrentTime() const { return _currentTime; }
 
 private:
     // Per-entity: we keep a small buffer of recent snapshots
     // and interpolate between the two surrounding our render time.
     struct SnapshotEntry {
         float timestamp = 0.0f;
-        ReplicatedEntityState state;
+        Math::Vector3 position;
+        Math::Vector3 velocity;
+        Math::Quaternion rotation;
     };
 
     struct EntityBuffer {

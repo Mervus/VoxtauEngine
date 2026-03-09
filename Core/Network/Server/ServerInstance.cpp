@@ -13,7 +13,7 @@
 #include "Core/Network/Protocol/PacketTypes.h"
 #include "Resources/BlockRegistry.h"
 #include "Core/Network/Replication/EntityReplicator.h"
-
+#include "Core/Network/Protocol/BitStream.h"
 #include <iostream>
 #include <algorithm>
 #include <cstring>
@@ -35,6 +35,7 @@ void ServerInstance::Initialize(const ServerConfig& config) {
 
     _chunkManager = std::make_unique<ChunkManager>();
     _entityManager = std::make_unique<EntityManager>();
+    _entityReplicator = std::make_unique<EntityReplicator>();
     _physics = std::make_unique<VoxelPhysics>();
     _physics->Initialize(_chunkManager.get());
 
@@ -390,6 +391,9 @@ void ServerInstance::ApplyClientInputs() {
             body->velocity.y = player->GetJumpForce();
         }
 
+        // Set rotation from input yaw so it replicates to other clients
+        player->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(0, input.yaw, 0)));
+
         proxy->lastAppliedInput = input;
         proxy->lastProcessedInputTick = input.tick;
     }
@@ -412,55 +416,46 @@ void ServerInstance::StepSimulation() {
 //  Internal: State Replication 
 
 void ServerInstance::ReplicateState() {
-    // Build and send a snapshot to each connected client
     for (auto& [connId, proxy] : _clients) {
         if (proxy->state != ClientProxy::State::InGame) continue;
 
-        ServerSnapshot snapshot;
-        snapshot.serverTick = _currentTick;
-        snapshot.lastProcessedInput = proxy->lastProcessedInputTick;
-        snapshot.worldStateVersion = 0; // TODO: track block changes
+        BitWriter writer;
 
-        // Local player authoritative state
+        // Packet type
+        writer.Write(static_cast<uint8_t>(PacketType::Snapshot));
+
+        // Snapshot header
+        writer.Write(_currentTick);
+        writer.Write(proxy->lastProcessedInputTick);
+        writer.Write(static_cast<uint32_t>(0)); // worldStateVersion TODO
+
+        // Local player authoritative state (prediction reconciliation)
         auto* player = _entityManager->GetEntityAs<PlayerEntity>(proxy->playerEntity);
         if (player) {
             VoxelBody* body = _physics->GetBody(player->GetPhysicsBodyID());
             if (body) {
-                snapshot.playerPosition = body->position;
-                snapshot.playerVelocity = body->velocity;
-                snapshot.playerOnGround = body->grounded;
+                writer.Write(body->position);
+                writer.Write(body->velocity);
+                writer.Write(body->grounded);
             }
         }
 
-        // Visible entities (everything within this client's area of interest)
-        // For now: send all entities except the client's own player
-        // TODO: proper AOI based on distance / chunk subscription
-        _entityManager->ForEach([&](Entity* entity) {
-            if (entity->GetID() == proxy->playerEntity) return; // skip self
+        // Entity state — replicator handles scope, delta, AOI
+        Math::Vector3 viewCenter = player ? player->GetPosition() : Math::Vector3();
+        float viewRadius = static_cast<float>(_config.renderDistance) * 32.0f;
 
-            ReplicatedEntityState state;
-            state.id = entity->GetID();
-            state.type = entity->GetType();
-            state.position = entity->GetPosition();
+        _entityReplicator->SerializeEntitiesForClient(
+            connId,
+            _entityManager.get(),
+            proxy->playerEntity,
+            viewCenter,
+            viewRadius,
+            _currentTick,
+            writer);
 
-            // If it's a living entity, include combat-relevant state
-            if (entity->GetType() == EntityType::Player ||
-                entity->GetType() == EntityType::NPC ||
-                entity->GetType() == EntityType::Monster) {
-                auto* living = static_cast<LivingEntity*>(entity);
-                state.health = living->GetCurrentHealth();
-                state.maxHealth = living->GetMaxHealth();
-                state.isDead = living->IsDead();
-                state.velocity = living->GetVelocity();
-            }
-
-            snapshot.entities.push_back(state);
-        });
-
-        // Serialize and send
-        // TODO: actual delta compression
-        auto packetData = PacketSerializer::SerializeSnapshot(snapshot);
-        proxy->transport->SendPacket(proxy->transportConnId, packetData, 0, SendMode::Unreliable);
+        // Send
+        proxy->transport->SendPacket(
+            proxy->transportConnId, writer.Buffer(), 0, SendMode::Unreliable);
     }
 }
 

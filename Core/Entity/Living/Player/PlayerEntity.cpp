@@ -29,7 +29,7 @@ void PlayerEntity::Update(float deltaTime) {
     if (_animator) {
         _animator->Update(deltaTime);
 
-        float horizontalSpeedSq = _velocity.x * _velocity.x + _velocity.z * _velocity.z;
+        float horizontalSpeedSq = _velocity->x * _velocity->x + _velocity->z * _velocity->z;
         bool moving = horizontalSpeedSq > 0.01f;
         const std::string& current = _animator->GetCurrentClipName();
 
@@ -47,6 +47,7 @@ void PlayerEntity::Update(float deltaTime) {
     if (!body) return;
 
     SetPosition(body->position);
+    SetVelocity(body->totalVelocity);
 
     // Update movement state from physics
     if (body->grounded) {
