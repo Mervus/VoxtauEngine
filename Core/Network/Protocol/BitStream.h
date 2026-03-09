@@ -106,12 +106,12 @@ public:
     }
 
     /**
-    Generic write
-    Fallback for any trivially_copyable type not covered above.
-    This is what makes Rep<SomeCustomStruct, Scope::All> work
-    without adding explicit overloads.
-
-    SFINAE ensures this doesn't compete with the typed overloads.
+    * Generic write
+    * Fallback for any trivially_copyable type not covered above.
+    * This is what makes Rep<SomeCustomStruct, Scope::All> work
+    * without adding explicit overloads.
+    *
+    * SFINAE ensures this doesn't compete with the typed overloads.
     */
     template<typename T>
     std::enable_if_t<
