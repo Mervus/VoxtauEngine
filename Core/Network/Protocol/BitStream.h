@@ -19,7 +19,8 @@
 // BitWriter serialize into a growable buffer
 class BitWriter {
 public:
-    explicit BitWriter(size_t reserveBytes = 256) {
+    explicit BitWriter(size_t reserveBytes = 256)
+    {
         _buffer.reserve(reserveBytes);
     }
 
@@ -28,59 +29,80 @@ public:
     // add compression later (e.g., varint, half-float, quantized
     // angles) per type without changing calling code.
 
-    void Write(bool v) {
+    void Write(bool v)
+    {
         _buffer.push_back(v ? 1 : 0);
     }
 
-    void Write(uint8_t v) {
+    void Write(uint8_t v)
+    {
         _buffer.push_back(v);
     }
 
-    void Write(int8_t v) {
+    void Write(int8_t v)
+    {
         _buffer.push_back(static_cast<uint8_t>(v));
     }
 
-    void Write(uint16_t v) {
+    void Write(uint16_t v)
+    {
         Append(&v, sizeof(v));
     }
 
-    void Write(int16_t v) {
+    void Write(int16_t v)
+    {
         Append(&v, sizeof(v));
     }
 
-    void Write(uint32_t v) {
+    void Write(uint32_t v)
+    {
         Append(&v, sizeof(v));
     }
 
-    void Write(int32_t v) {
+    void Write(int32_t v)
+    {
         Append(&v, sizeof(v));
     }
 
-    void Write(uint64_t v) {
+    void Write(uint64_t v)
+    {
         Append(&v, sizeof(v));
     }
 
-    void Write(int64_t v) {
+    void Write(int64_t v)
+    {
         Append(&v, sizeof(v));
     }
 
-    void Write(float v) {
+    void Write(float v)
+    {
         Append(&v, sizeof(v));
     }
 
-    void Write(double v) {
+    void Write(double v)
+    {
         Append(&v, sizeof(v));
     }
 
     // Engine types
-    void Write(const Math::Vector3& v) {
+    void Write(const Math::Vector3& v)
+    {
         Write(v.x);
         Write(v.y);
         Write(v.z);
     }
 
-    void Write(const EntityID& v) {
+    void Write(const EntityID& v)
+    {
         Write(v.Get());
+    }
+
+    void Write(const Math::Quaternion& v)
+    {
+        Write(v.x);
+        Write(v.y);
+        Write(v.z);
+        Write(v.w);
     }
 
     /**
