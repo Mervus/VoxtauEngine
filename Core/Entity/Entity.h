@@ -41,7 +41,7 @@ protected:
 public:
     Rep<Vector3, Scope::All>  position{{0,0,0}};
     Rep<Vector3, Scope::All>  velocity{{0,0,0}};
-    Rep<float, Scope::All>    yaw{0.0f};
+    Rep<Math::Quaternion, Scope::All> rotation{Math::Quaternion::Identity};
 
 private:
     EntityID _id;

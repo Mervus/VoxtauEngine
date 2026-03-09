@@ -68,7 +68,7 @@ class ServerInstance
 
     //  Per-tick 
 
-    // Full server tick: receive input → simulate → replicate
+    // Full server tick: receive input -> simulate -> replicate
     void Tick(float deltaTime);
 
     //  Client management 

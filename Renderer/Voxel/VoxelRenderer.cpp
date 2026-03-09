@@ -475,7 +475,7 @@ uint32_t VoxelRenderer::ReadBackFaceCount(ChunkGpuData& data)
     // Unbind compute UAVs so we can read from the counter buffer
     _renderer->UnbindComputeResources();
 
-    // Direct D3D11 copy: counterBuffer (ByteAddressBuffer) → staging
+    // Direct D3D11 copy: counterBuffer (ByteAddressBuffer) -> staging
     ID3D11DeviceContext* ctx = _renderer->GetContext();
     ID3D11Buffer* srcBuffer = static_cast<ID3D11Buffer*>(data.counterBuffer);
     ID3D11Buffer* stagingBuffer = static_cast<ID3D11Buffer*>(_counterStagingBuffer);

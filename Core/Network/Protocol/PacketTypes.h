@@ -11,13 +11,13 @@
 // First byte of every packet identifies its type.
 // Server and client switch on this to route to the correct handler.
 enum class PacketType : uint8_t {
-    // Client → Server
+    // Client -> Server
     ClientInput         = 0x01,  // PlayerInputState (sent every tick, unreliable)
     BlockChangeRequest  = 0x02,  // Position + block type (reliable)
     ChatMessage         = 0x03,  // Text (reliable)
     ClientReady         = 0x04,  // Client finished loading, ready to receive snapshots
 
-    // Server → Client
+    // Server -> Client
     Snapshot            = 0x10,  // ServerSnapshot (sent at network rate, unreliable)
     EntitySpawn         = 0x11,  // Full entity state for newly visible entity (reliable)
     EntityDespawn       = 0x12,  // EntityID leaving area of interest (reliable)

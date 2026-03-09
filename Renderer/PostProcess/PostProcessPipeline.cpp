@@ -184,7 +184,7 @@ void PostProcessPipeline::EndSceneCapture(
     }
 
     // Run effect chain
-    // Scaled effects: render at low res → composite over full-res scene
+    // Scaled effects: render at low res -> composite over full-res scene
     // Full-res effects: render directly, replacing the buffer
 
     Texture* currentFullRes = _sceneRT->GetColorTexture();

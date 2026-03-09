@@ -53,7 +53,7 @@ public:
 
     // Per-tick
 
-    // Full client tick: receive snapshots → send input → predict → reconcile
+    // Full client tick: receive snapshots -> send input -> predict -> reconcile
     void Tick(float deltaTime);
 
     // Input

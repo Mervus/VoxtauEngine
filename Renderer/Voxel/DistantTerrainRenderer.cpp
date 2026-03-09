@@ -39,7 +39,7 @@ Math::Vector3 DistantTerrainRenderer::HeightToColor(float height, float maxHeigh
         float s = (t - 0.20f) / 0.20f;
         return Math::Vector3(0.22f + s * 0.10f, 0.57f - s * 0.02f, 0.13f + s * 0.05f);
     } else if (t < 0.60f) {
-        // Dry grass → rock transition — desaturated olive
+        // Dry grass -> rock transition — desaturated olive
         float s = (t - 0.40f) / 0.20f;
         return Math::Vector3(0.32f + s * 0.10f, 0.55f - s * 0.15f, 0.18f + s * 0.15f);
     } else if (t < 0.80f) {
