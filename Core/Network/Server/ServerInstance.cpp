@@ -391,8 +391,12 @@ void ServerInstance::ApplyClientInputs() {
             body->velocity.y = player->GetJumpForce();
         }
 
-        // Set rotation from input yaw so it replicates to other clients
-        player->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(0, input.yaw, 0)));
+        // Face the movement direction (not camera yaw)
+        float speedSq = worldMoveX * worldMoveX + worldMoveZ * worldMoveZ;
+        if (speedSq > 0.001f) {
+            float moveYaw = std::atan2(body->inputVelocity.x, body->inputVelocity.z);
+            player->SetRotation(Math::Quaternion::FromEulerAngles(Math::Vector3(0, moveYaw, 0)));
+        }
 
         proxy->lastAppliedInput = input;
         proxy->lastProcessedInputTick = input.tick;
