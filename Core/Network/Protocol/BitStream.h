@@ -216,20 +216,19 @@ public:
     explicit BitReader(std::span<const uint8_t> buffer)
         : _data(buffer.data()), _size(buffer.size()), _offset(0) {}
 
-    //  Typed reads 
+    //  Typed reads
     void Read(bool& v) {
-        assert(CanRead(1));
-        v = _data[_offset++] != 0;
+        uint8_t raw = 0;
+        Consume(&raw, 1);
+        v = raw != 0;
     }
 
     void Read(uint8_t& v) {
-        assert(CanRead(1));
-        v = _data[_offset++];
+        Consume(&v, 1);
     }
 
     void Read(int8_t& v) {
-        assert(CanRead(1));
-        v = static_cast<int8_t>(_data[_offset++]);
+        Consume(&v, 1);
     }
 
     void Read(uint16_t& v) {
@@ -360,7 +359,10 @@ public:
 
     // Skip past bytes without reading them
     void Skip(size_t bytes) {
-        assert(CanRead(bytes));
+        if (!CanRead(bytes)) {
+            _error = true;
+            return;
+        }
         _offset += bytes;
     }
 
