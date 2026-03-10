@@ -40,9 +40,11 @@ public:
       [EntityID]    4 bytes
       [EntityType]  1 byte
       [Scope::All serialized fields]
-      [Scope::Owner serialized fields]  (only for owner entity)
+      [hasOwner]    1 byte (bool)
+      [Scope::Owner serialized fields]  (only if hasOwner is true)
 
     Packet ends with EntityID(0) sentinel.
+
      * @param client
      * @param entityManager
      * @param ownerEntity

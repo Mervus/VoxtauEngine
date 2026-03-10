@@ -75,6 +75,8 @@ void EntityReplicator::SerializeEntitiesForClient(
         pending.publicState = std::move(currentPublic);
         if (isOwner) {
             pending.ownerState = std::move(currentOwner);
+        } else {
+            pending.ownerState.clear();
         }
     });
 
