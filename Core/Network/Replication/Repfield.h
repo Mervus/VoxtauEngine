@@ -50,6 +50,15 @@ enum class Scope : uint8_t {
  */
 namespace RepContext {
     inline thread_local std::vector<IRepField*>* activeFieldList = nullptr;
+
+    // RAII guard that saves/restores activeFieldList, ensuring cleanup on all exit paths.
+    struct Guard {
+        std::vector<IRepField*>* prev;
+        Guard()  : prev(activeFieldList) {}
+        ~Guard() { activeFieldList = prev; }
+        Guard(const Guard&) = delete;
+        Guard& operator=(const Guard&) = delete;
+    };
 }
 
 /**

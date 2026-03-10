@@ -96,8 +96,8 @@ EntityID EntityManager::CreateEntity(Args&&... args) {
 
     EntityID id((_nextId++));
 
+    RepContext::Guard repGuard;
     auto entity = std::make_unique<T>(std::forward<Args>(args)...);
-    RepContext::activeFieldList = nullptr;
 
     entity->_id = id;
     entity->_entityManager = this;
@@ -117,8 +117,9 @@ EntityID EntityManager::CreateEntityWithID(EntityID id, Args&&... args) {
         return EntityID::Invalid;
     }
 
+    RepContext::Guard repGuard;
     auto entity = std::make_unique<T>(std::forward<Args>(args)...);
-    RepContext::activeFieldList = nullptr;
+
 
     entity->_id = id;
     entity->_entityManager = this;
