@@ -10,15 +10,14 @@
 
 class LivingEntity : public Entity {
 private:
-    float _currentHealth;
-    float _currentMana;
-    bool _isDead;
+    Rep<float, Scope::All> _currentHealth;
+    Rep<bool, Scope::All> _isDead;
 
 protected:
     float _maxHealth;
     float _maxMana;
     float _moveSpeed;
-    Vector3 _velocity;
+    Rep<Vector3, Scope::All> _velocity;
 
     // Called when health reaches zero — override for death behavior
     virtual void OnDeath(EntityID killedBy) {}

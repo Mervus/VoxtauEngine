@@ -30,7 +30,7 @@ A custom C++20 voxel engine built on DirectX 11. Features GPU-accelerated voxel 
 - **Ray-vs-voxel intersection** for targeting and attacks
 
 ### Entity System
-- Entity hierarchy: `Entity` → `LivingEntity` → `PlayerEntity`
+- Entity hierarchy: `Entity` -> `LivingEntity` -> `PlayerEntity`
 - ID-based entity manager with lifecycle management
 - Skeleton-based animation with clips and blending
 - Third-person player controller with camera follow

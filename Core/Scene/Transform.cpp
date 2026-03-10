@@ -142,7 +142,7 @@ void Transform::UpdateMatrices() const {
     Math::Matrix4x4 R = rotation.ToMatrix();
     Math::Matrix4x4 T = Math::Matrix4x4::Translation(position);
 
-    // Row-vector convention: Scale → Rotate → Translate
+    // Row-vector convention: Scale -> Rotate -> Translate
     localMatrix = S * R * T;
 
     if (parent) {

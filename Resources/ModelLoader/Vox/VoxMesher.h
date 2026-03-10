@@ -7,6 +7,7 @@
 #pragma once
 #include <EngineApi.h>
 #include "VoxModel.h"
+#include "Core/Math/Vector3.h"
 
 struct Vertex;
 class Mesh;

@@ -68,7 +68,7 @@ class ServerInstance
 
     //  Per-tick 
 
-    // Full server tick: receive input → simulate → replicate
+    // Full server tick: receive input -> simulate -> replicate
     void Tick(float deltaTime);
 
     //  Client management 
@@ -103,10 +103,10 @@ private:
     std::unique_ptr<ChunkManager> _chunkManager;
     std::unique_ptr<VoxelPhysics> _physics;
     std::unique_ptr<EntityManager> _entityManager;
+    std::unique_ptr<EntityReplicator> _entityReplicator;
 
     //  Networking
     std::vector<INetworkTransport*> _transports;  // not owned, just observed
-    std::unique_ptr<EntityReplicator> _replicator;
     std::unordered_map<ConnectionID, std::unique_ptr<ClientProxy>> _clients;
     ConnectionID _nextConnectionId = 1;
 

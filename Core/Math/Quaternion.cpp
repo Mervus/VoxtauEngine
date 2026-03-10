@@ -168,7 +168,7 @@ namespace Math {
 
     // Convert to Euler angles (pitch, yaw, roll)
     // Unity-style YXZ intrinsic extraction
-    // Pitch(X) is the middle rotation → extracted via asin
+    // Pitch(X) is the middle rotation -> extracted via asin
     Vector3 Quaternion::ToEulerAngles() const {
         Vector3 euler;
 

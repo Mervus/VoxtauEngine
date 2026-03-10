@@ -70,7 +70,7 @@ Mesh* VoxMesher::CreateMesh(const VoxModel& model, const std::string& name,
     }
 
     // Origin offset for centering
-    // MagicaVoxel is Z-up, engine is Y-up: MV x→x, MV z→y(up), MV y→z(depth)
+    // MagicaVoxel is Z-up, engine is Y-up: MV x->x, MV z->y(up), MV y->z(depth)
     Math::Vector3 offset(0.0f, 0.0f, 0.0f);
     if (centerOrigin) {
         offset = Math::Vector3(
@@ -88,7 +88,7 @@ Mesh* VoxMesher::CreateMesh(const VoxModel& model, const std::string& name,
     indices.reserve(model.voxels.size() * 12);
 
     // Generate faces for each solid voxel
-    // Coordinate remap: MV x→engine x, MV z→engine y (up), MV y→engine z (depth)
+    // Coordinate remap: MV x->engine x, MV z->engine y (up), MV y->engine z (depth)
     for (uint32_t z = 0; z < sz; z++) {
         for (uint32_t y = 0; y < sy; y++) {
             for (uint32_t x = 0; x < sx; x++) {
@@ -97,13 +97,13 @@ Mesh* VoxMesher::CreateMesh(const VoxModel& model, const std::string& name,
 
                 VoxColor color = model.GetColor(colorIdx);
 
-                // Engine coordinates: MV x→x, MV z→y(up), MV y→z(depth)
+                // Engine coordinates: MV x->x, MV z->y(up), MV y->z(depth)
                 float ex = (float)x * scale + offset.x;
                 float ey = (float)z * scale + offset.y;
                 float ez = (float)y * scale + offset.z;
                 float s = scale;
 
-                // +X face (MV) → +X face (engine)
+                // +X face (MV) -> +X face (engine)
                 if (!IsSolid(grid.data(), sx, sy, sz, x + 1, y, z)) {
                     AddFace(vertices, indices,
                         Math::Vector3(ex + s, ey,     ez),
@@ -113,7 +113,7 @@ Mesh* VoxMesher::CreateMesh(const VoxModel& model, const std::string& name,
                         Math::Vector3(1, 0, 0), color);
                 }
 
-                // -X face (MV) → -X face (engine)
+                // -X face (MV) -> -X face (engine)
                 if (!IsSolid(grid.data(), sx, sy, sz, x - 1, y, z)) {
                     AddFace(vertices, indices,
                         Math::Vector3(ex, ey,     ez + s),
@@ -123,7 +123,7 @@ Mesh* VoxMesher::CreateMesh(const VoxModel& model, const std::string& name,
                         Math::Vector3(-1, 0, 0), color);
                 }
 
-                // +Y face (MV) → +Z face (engine)
+                // +Y face (MV) -> +Z face (engine)
                 if (!IsSolid(grid.data(), sx, sy, sz, x, y + 1, z)) {
                     AddFace(vertices, indices,
                         Math::Vector3(ex,     ey,     ez + s),
@@ -133,7 +133,7 @@ Mesh* VoxMesher::CreateMesh(const VoxModel& model, const std::string& name,
                         Math::Vector3(0, 0, 1), color);
                 }
 
-                // -Y face (MV) → -Z face (engine)
+                // -Y face (MV) -> -Z face (engine)
                 if (!IsSolid(grid.data(), sx, sy, sz, x, y - 1, z)) {
                     AddFace(vertices, indices,
                         Math::Vector3(ex + s, ey,     ez),
@@ -143,7 +143,7 @@ Mesh* VoxMesher::CreateMesh(const VoxModel& model, const std::string& name,
                         Math::Vector3(0, 0, -1), color);
                 }
 
-                // +Z face (MV) → +Y face (engine)
+                // +Z face (MV) -> +Y face (engine)
                 if (!IsSolid(grid.data(), sx, sy, sz, x, y, z + 1)) {
                     AddFace(vertices, indices,
                         Math::Vector3(ex,     ey + s, ez),
@@ -153,7 +153,7 @@ Mesh* VoxMesher::CreateMesh(const VoxModel& model, const std::string& name,
                         Math::Vector3(0, 1, 0), color);
                 }
 
-                // -Z face (MV) → -Y face (engine)
+                // -Z face (MV) -> -Y face (engine)
                 if (!IsSolid(grid.data(), sx, sy, sz, x, y, z - 1)) {
                     AddFace(vertices, indices,
                         Math::Vector3(ex,     ey, ez + s),

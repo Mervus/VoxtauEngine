@@ -11,6 +11,8 @@
 #include "Entity.h"
 #include "EntityID.h"
 
+#include "Core/Network/Replication/Repfield.h"
+
 class EntityManager
 {
 private:
@@ -94,7 +96,9 @@ EntityID EntityManager::CreateEntity(Args&&... args) {
 
     EntityID id((_nextId++));
 
+    RepContext::Guard repGuard;
     auto entity = std::make_unique<T>(std::forward<Args>(args)...);
+
     entity->_id = id;
     entity->_entityManager = this;
 
@@ -113,7 +117,10 @@ EntityID EntityManager::CreateEntityWithID(EntityID id, Args&&... args) {
         return EntityID::Invalid;
     }
 
+    RepContext::Guard repGuard;
     auto entity = std::make_unique<T>(std::forward<Args>(args)...);
+
+
     entity->_id = id;
     entity->_entityManager = this;
 

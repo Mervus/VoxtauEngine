@@ -15,12 +15,3 @@ constexpr float HALF_PI = 1.57079632679489661923f;
 constexpr float DEG_TO_RAD = PI / 180.0f;
 constexpr float RAD_TO_DEG = 180.0f / PI;
 constexpr float EPSILON = 1e-6f;
-
-// Forward declarations
-namespace Math {
-    class Vector2;
-    class Vector3;
-    class Vector4;
-    class Matrix4x4;
-    class Quaternion;
-}
