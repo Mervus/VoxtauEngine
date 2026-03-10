@@ -286,6 +286,11 @@ public:
         uint8_t largestIndex;
         uint16_t a, b, c;
         Read(largestIndex);
+        if (largestIndex > 3) {
+            _error = true;
+            q = Math::Quaternion{0, 0, 0, 1};
+            return;
+        }
         Read(a);
         Read(b);
         Read(c);
