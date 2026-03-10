@@ -256,6 +256,10 @@ void ClientSession::ProcessServerSnapshots() {
             switch (type) {
 
             case PacketType::Snapshot: {
+                    if (!_localEntityManager || !_predictionPhysics || !_predictionBody.IsValid()) {
+                        break;
+                    }
+
                     BitReader reader(event.data.data() + 1, event.data.size() - 1); // skip packet type byte
 
                     uint32_t serverTick = reader.Read<uint32_t>();
@@ -268,6 +272,8 @@ void ClientSession::ProcessServerSnapshots() {
                     reader.Read(playerPosition);
                     reader.Read(playerVelocity);
                     reader.Read(playerOnGround);
+
+                    if (reader.HasError()) break;
 
                     ServerSnapshot snapshot{
                         serverTick, lastProcessedInput, worldStateVersion, playerPosition, playerVelocity, playerOnGround
@@ -319,10 +325,12 @@ void ClientSession::ProcessServerSnapshots() {
                         }
                     }
 
-                    BitWriter ack;
-                    ack.Write(static_cast<uint8_t>(PacketType::SnapshotAck));
-                    ack.Write(serverTick);
-                    _transport->SendPacket(_serverConnectionId, ack.Buffer(), 1, SendMode::Reliable);
+                    if (!reader.HasError()) {
+                        BitWriter ack;
+                        ack.Write(static_cast<uint8_t>(PacketType::SnapshotAck));
+                        ack.Write(serverTick);
+                        _transport->SendPacket(_serverConnectionId, ack.Buffer(), 1, SendMode::Reliable);
+                    }
                     break;
             }
 
