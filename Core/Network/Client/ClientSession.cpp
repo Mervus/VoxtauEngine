@@ -292,9 +292,15 @@ void ClientSession::ProcessServerSnapshots() {
 
                         // Find or create entity in local EntityManager
                         Entity* entity = _localEntityManager->GetEntity(id);
+                        //TODO: maybe create Factory. Depends on how many entity types actually exist
                         if (!entity) {
-                            // New entity — spawn it
-                            // (or queue a spawn request depending on your flow)
+                            switch (type) {
+                            case EntityType::Player:
+                                _localEntityManager->CreateEntityWithID<PlayerEntity>(id, "RemotePlayer");
+                                break;
+                            default: std::cerr << "[Client] Unknown entity type " << static_cast<int>(type) << std::endl;
+                            }
+
                             _localEntityManager->CreateEntityWithID<PlayerEntity>(id, "RemotePlayer");
                             entity = _localEntityManager->GetEntity(id);
                             if (entity && OnRemoteEntitySpawned) {
@@ -312,6 +318,9 @@ void ClientSession::ProcessServerSnapshots() {
                                 entity->DeserializeScope(reader, Scope::Owner);
                             }
 
+                            // Sync Rep fields -> Transform for rendering
+                            entity->SyncTransform();
+
                             if (entity->GetType() == EntityType::Player || entity->GetType() == EntityType::NPC || entity->GetType() == EntityType::Monster)
                             {
                                 LivingEntity* living = dynamic_cast<LivingEntity*>(entity);
@@ -319,9 +328,6 @@ void ClientSession::ProcessServerSnapshots() {
                                 _interpolator->PushState(id, timestamp, living->GetPosition(), living->GetVelocity(), living->GetRotation());
 
                             }
-
-                            // Sync Rep fields -> Transform for rendering
-                            entity->SyncTransform();
                         }
                     }
 
