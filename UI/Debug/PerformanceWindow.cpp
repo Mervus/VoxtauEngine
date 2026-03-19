@@ -7,6 +7,8 @@
 #include <imgui.h>
 #include <cstring>
 
+#include "Core/Profiler/Profiler.h"
+
 PerformanceWindow::PerformanceWindow()
     : isOpen(true)
     , frameTimeHistoryIndex(0)
@@ -15,6 +17,7 @@ PerformanceWindow::PerformanceWindow()
 }
 
 void PerformanceWindow::Update(float deltaTime) {
+    PROFILE_FUNCTION();
     // Store frame time in history
     frameTimeHistory[frameTimeHistoryIndex] = deltaTime * 1000.0f; // Convert to ms
     frameTimeHistoryIndex = (frameTimeHistoryIndex + 1) % 100;

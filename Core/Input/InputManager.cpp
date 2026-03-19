@@ -5,6 +5,8 @@
 #include "InputManager.h"
 #include <iostream>
 
+#include "Core/Profiler/Profiler.h"
+
 InputManager::InputManager(GLFWwindow* window)
     : window(window)
     , lastMouseX(0.0)
@@ -34,6 +36,7 @@ void InputManager::InitializeKeyMap() {
 }
 
 void InputManager::Update() {
+    PROFILE_FUNCTION();
     // Update mouse delta
     double mouseX, mouseY;
     glfwGetCursorPos(window, &mouseX, &mouseY);

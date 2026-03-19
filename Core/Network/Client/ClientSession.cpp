@@ -19,6 +19,7 @@
 #include "Core/Entity/Living/Player/PlayerEntity.h"
 #include "Core/Network/Protocol/InputButton.h"
 #include "Core/Network/Protocol/PacketSerializer.h"
+#include "Core/Profiler/Profiler.h"
 #include "Core/Voxel/ChunkManager.h"
 #include "Resources/Animation/Animator.h"
 
@@ -105,6 +106,7 @@ void ClientSession::Connect(const std::string& address, uint16_t port) {
 
 //  Per-Tick 
 void ClientSession::Tick(float deltaTime) {
+    PROFILE_FUNCTION();
     ProcessServerSnapshots();
     SendInput();
     Predict();

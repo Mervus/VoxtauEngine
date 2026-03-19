@@ -20,6 +20,7 @@
 
 #include "Core/Network/Protocol/InputButton.h"
 #include "Core/Network/Protocol/PacketSerializer.h"
+#include "Core/Profiler/Profiler.h"
 #include "Core/World/IWorldGenerator.h"
 
 //  Lifecycle 
@@ -54,9 +55,9 @@ void ServerInstance::SetBlockRegistry(BlockRegistry* registry) {
 }
 
 void ServerInstance::GenerateWorld() {
+    PROFILE_SCOPE("GenerateWorld");
     assert(_chunkManager);
     assert(_worldGenerator);
-
     // ReSharper disable once CppDFAUnreachableCode
     if (!_chunkManager) {
         std::cerr << "[Server] Cannot generate world not initialized" << std::endl;
@@ -119,6 +120,7 @@ void ServerInstance::AddTransport(INetworkTransport* transport) {
 //  Main Tick 
 
 void ServerInstance::Tick(float deltaTime) {
+    PROFILE_FUNCTION();
     // 1. Read all incoming packets from all transports
     ProcessIncomingPackets();
 
@@ -236,6 +238,7 @@ EntityID ServerInstance::GetPlayerEntity(ConnectionID client) const {
 //  Internal: Packet Processing 
 
 void ServerInstance::ProcessIncomingPackets() {
+    PROFILE_FUNCTION();
     std::vector<NetworkEvent> events;
 
     for (auto* transport : _transports) {
@@ -355,6 +358,7 @@ void ServerInstance::ProcessClientPackets() {
 //  Internal: Input Application
 
 void ServerInstance::ApplyClientInputs() {
+    PROFILE_FUNCTION();
     // First parse any raw packets into the typed input queue
     ProcessClientPackets();
 
@@ -415,6 +419,7 @@ void ServerInstance::ApplyClientInputs() {
 //  Internal: Simulation Step 
 
 void ServerInstance::StepSimulation() {
+    PROFILE_FUNCTION();
     float fixedDt = 1.0f / _config.tickRate;
 
     // Physics steps all bodies
@@ -429,6 +434,7 @@ void ServerInstance::StepSimulation() {
 //  Internal: State Replication 
 
 void ServerInstance::ReplicateState() {
+    PROFILE_FUNCTION();
     for (auto& [connId, proxy] : _clients) {
         if (proxy->state != ClientProxy::State::InGame) continue;
 
@@ -475,6 +481,7 @@ void ServerInstance::ReplicateState() {
 //  Internal: Chunk Streaming 
 
 void ServerInstance::StreamChunks() {
+    PROFILE_FUNCTION();
     for (auto& [connId, proxy] : _clients) {
         if (proxy->state == ClientProxy::State::Connected && !proxy->playerEntity.IsValid()) continue;
 

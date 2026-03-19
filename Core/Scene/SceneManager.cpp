@@ -5,6 +5,8 @@
 #include "SceneManager.h"
 #include <iostream>
 
+#include "Core/Profiler/Profiler.h"
+
 SceneManager::SceneManager(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* inputManager, ClientSession* clientSession)
     : _currentScene(nullptr)
     , _nextScene(nullptr)
@@ -108,12 +110,14 @@ void SceneManager::LoadSceneAsync(const std::string& name) {
 }
 
 void SceneManager::Update(float deltaTime) {
+    PROFILE_FUNCTION();
     if (_currentScene) {
         _currentScene->Update(deltaTime);
     }
 }
 
 void SceneManager::LateUpdate(float deltaTime) {
+    PROFILE_FUNCTION();
     if (_currentScene) {
         _currentScene->LateUpdate(deltaTime);
     }

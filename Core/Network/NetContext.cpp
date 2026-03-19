@@ -5,6 +5,7 @@
 #include "NetContext.h"
 #include "Server/ServerInstance.h"
 #include "Client/ClientSession.h"
+#include "Core/Profiler/Profiler.h"
 #include "Transport/ENetTransport.h"
 #include "Transport/LocalTransport.h"
 
@@ -128,6 +129,7 @@ void NetContext::Shutdown()
 }
 
 void NetContext::Tick(float deltaTime) {
+    PROFILE_FUNCTION();
     // Server processes incoming packets and simulates
     if (_server) {
         _server->Tick(deltaTime);

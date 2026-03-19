@@ -5,6 +5,7 @@
 #include "ChunkManager.h"
 #include <cmath>
 
+#include "Core/Profiler/Profiler.h"
 #include "VoxelType.h"
 #include "IChunkGenerator.h"
 
@@ -98,6 +99,7 @@ bool ChunkManager::IsSolidAt(int worldX, int worldY, int worldZ) const {
 }
 
 Chunk* ChunkManager::CreateChunk(int chunkX, int chunkY, int chunkZ) {
+    PROFILE_FUNCTION();
     Math::Vector3 chunkPos((float)chunkX, (float)chunkY, (float)chunkZ);
 
     // Check if chunk already exists

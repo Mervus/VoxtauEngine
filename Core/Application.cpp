@@ -213,7 +213,9 @@ void Application::Shutdown() {
     _inputManager.reset();
     _renderer.reset();
 
-    std::cout << "Application shutdown complete." << std::endl;
+    Profiler::Instance().ExportJson();
+
+    std::cout << "[Client] Application shutdown complete." << std::endl;
 }
 
 void Application::HandleResize(GLFWwindow* window, int32_t width, int32_t height)
