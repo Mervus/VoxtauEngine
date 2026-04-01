@@ -8,8 +8,12 @@ include(FetchContent)
 
 FetchContent_Declare(nlohmann_json GIT_REPOSITORY https://github.com/nlohmann/json.git GIT_TAG v3.11.3)
 FetchContent_Declare(enet GIT_REPOSITORY https://github.com/lsalzman/enet.git GIT_TAG v1.3.18)
+FetchContent_Declare(enkiTS GIT_REPOSITORY https://github.com/dougbinks/enkiTS.git GIT_TAG master)
+set(ENKITS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(ENKITS_BUILD_BENCHMARK OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(nlohmann_json)
 FetchContent_MakeAvailable(enet)
+FetchContent_MakeAvailable(enkiTS)
 target_include_directories(enet PUBLIC ${enet_SOURCE_DIR}/include)
 
 # EngineCore (cross-platform, no GPU)
@@ -49,6 +53,9 @@ add_library(EngineCore STATIC
 
         # Profiler
         Core/Profiler/Profiler.cpp
+
+        # Job system
+        Core/Jobs/JobSystem.cpp
 
         # Resources (data only)
         Resources/BlockRegistry.cpp
@@ -95,6 +102,7 @@ target_link_libraries(EngineCore
         PUBLIC
         nlohmann_json::nlohmann_json
         enet
+        enkiTS
 )
 
 if(WIN32)

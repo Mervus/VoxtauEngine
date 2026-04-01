@@ -162,7 +162,6 @@ void Profiler::ExportJson()
     using nlohmann::json;
 
     json traceEvents = json::array();
-
     // Export all flame frames from the ring buffer (oldest to newest)
     // Entries use absolute timestamps relative to profiler origin
     int count = _flameFrameCount;
