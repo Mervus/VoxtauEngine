@@ -9,6 +9,7 @@
 #include <GLFW/glfw3native.h>
 
 #include "imgui.h"
+#include "Jobs/JobSystem.h"
 #include "Math/MathUtils.h"
 #include "Profiler/Profiler.h"
 #include "Scene/Scene.h"
@@ -39,6 +40,8 @@ Application::~Application()
 
 bool Application::Initialize() {
     std::cout << "[Client] Initializing Application..." << std::endl;
+
+    JobSystem::Instance().Initialize();
 
     // Create GLFW window FIRST
     if (!InitializeGLFW()) {
@@ -201,6 +204,8 @@ void Application::Render()
 
 void Application::Shutdown() {
     std::cout << "Shutting down Application..." << std::endl;
+
+    JobSystem::Instance().Shutdown();
 
     _sceneManager.reset();
     _resourceManager.reset();
