@@ -111,6 +111,8 @@ void RenderPipeline::Shutdown()
     if (_entityRenderer)
     {
         _entityRenderer->Shutdown();
+        delete _entityRenderer;
+        _entityRenderer = nullptr;
     }
 }
 

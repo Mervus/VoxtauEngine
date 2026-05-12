@@ -115,11 +115,9 @@ void NetContext::ConnectToServer(const std::string& address, uint16_t port)
 void NetContext::Shutdown()
 {
     if (_client) {
-        _client->Shutdown();
         _client.reset();
     }
     if (_server) {
-        _server->Shutdown();
         _server.reset();
     }
     _localTransportServer.reset();

@@ -205,8 +205,10 @@ void Application::Render()
 void Application::Shutdown() {
     std::cout << "Shutting down Application..." << std::endl;
 
+
     JobSystem::Instance().Shutdown();
 
+    //TODO: SHUTDOWN CRASHES before end.
     _sceneManager.reset();
     _resourceManager.reset();
     _shaderCollection.reset();

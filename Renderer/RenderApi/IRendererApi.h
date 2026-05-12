@@ -123,6 +123,13 @@ class IRendererApi
     virtual void* CreateRawIndirectArgsBuffer(size_t sizeBytes) = 0;
     virtual void* CreateRawIndirectArgsBufferUAV(void* buffer) = 0;
 
+    virtual void DestroyByteAddressBuffer(void* buffer) = 0;
+    virtual void DestroyByteAddressBufferUAV(void* uav) = 0;
+    virtual void DestroyIndirectArgsBuffer(void* buffer) = 0;
+    virtual void DestroyIndirectArgsBufferUAV(void* uav) = 0;
+    virtual void DestroyRawIndirectArgsBuffer(void* buffer) = 0;
+    virtual void DestroyRawIndirectArgsBufferUAV(void* uav) = 0;
+
     virtual void UpdateByteAddressBuffer(void* buffer, const void* data, size_t sizeBytes) = 0;
     // Copy append buffer counter -> another buffer
     virtual void CopyStructureCount(void* destBuffer, uint32_t destByteOffset, void* srcUAV) = 0;

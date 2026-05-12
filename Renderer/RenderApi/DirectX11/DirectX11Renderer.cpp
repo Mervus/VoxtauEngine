@@ -2226,9 +2226,48 @@ void DirectX11Renderer::CopyStructureCount(void* destBuffer, uint32_t destByteOf
     context->CopyStructureCount(d3dDest, destByteOffset, d3dSrcUAV);
 }
 
-// Helper: Update ByteAddressBuffer from CPU
-// If your buffer was created with cpuWrite=true, use this to update it.
-// Commonly used to reset an atomic counter to 0 before a dispatch.
+void DirectX11Renderer::DestroyByteAddressBuffer(void* buffer)
+{
+    if (buffer) {
+        static_cast<ID3D11Buffer*>(buffer)->Release();
+    }
+}
+
+void DirectX11Renderer::DestroyByteAddressBufferUAV(void* uav)
+{
+    if (uav) {
+        static_cast<ID3D11UnorderedAccessView*>(uav)->Release();
+    }
+}
+
+void DirectX11Renderer::DestroyIndirectArgsBuffer(void* buffer)
+{
+    if (buffer) {
+        static_cast<ID3D11Buffer*>(buffer)->Release();
+    }
+}
+
+void DirectX11Renderer::DestroyIndirectArgsBufferUAV(void* uav)
+{
+    if (uav) {
+        static_cast<ID3D11UnorderedAccessView*>(uav)->Release();
+    }
+}
+
+void DirectX11Renderer::DestroyRawIndirectArgsBuffer(void* buffer)
+{
+    if (buffer) {
+        static_cast<ID3D11Buffer*>(buffer)->Release();
+    }
+}
+
+void DirectX11Renderer::DestroyRawIndirectArgsBufferUAV(void* uav)
+{
+    if (uav) {
+        static_cast<ID3D11UnorderedAccessView*>(uav)->Release();
+    }
+}
+
 void DirectX11Renderer::UpdateByteAddressBuffer(void* buffer, const void* data, size_t sizeBytes)
 {
     if (!buffer || !data) return;

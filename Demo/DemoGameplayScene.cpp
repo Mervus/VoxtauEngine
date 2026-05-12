@@ -140,7 +140,6 @@ void DemoGameplayScene::OnInit()
 void DemoGameplayScene::OnDestroy()
 {
     if (_voxelPhysics) {
-        _voxelPhysics->Shutdown();
         delete _voxelPhysics;
         _voxelPhysics = nullptr;
     }

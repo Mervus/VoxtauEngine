@@ -352,14 +352,12 @@ void VoxelRenderer::ShutdownComputeResources()
     }
 
     if (_sharedDrawArgsUAV) {
-        auto* uav = static_cast<ID3D11UnorderedAccessView*>(_sharedDrawArgsUAV);
-        uav->Release();
+        _renderer->DestroyRawIndirectArgsBufferUAV(_sharedDrawArgsUAV);
         _sharedDrawArgsUAV = nullptr;
     }
 
     if (_sharedDrawArgsBuffer) {
-        auto* buf = static_cast<ID3D11Buffer*>(_sharedDrawArgsBuffer);
-        buf->Release();
+        _renderer->DestroyRawIndirectArgsBuffer(_sharedDrawArgsBuffer);
         _sharedDrawArgsBuffer = nullptr;
     }
 
@@ -412,8 +410,12 @@ void VoxelRenderer::DestroyChunkGpuBuffers(ChunkGpuData& data)
 
     if (data.voxelBuffer) _renderer->DestroyStructuredBuffer(data.voxelBuffer);
     if (data.vertexBuffer) _renderer->DestroyStructuredBuffer(data.vertexBuffer);
-    if (data.counterBuffer) _renderer->DestroyStructuredBuffer(data.counterBuffer);
-    if (data.drawArgsBuffer) _renderer->DestroyStructuredBuffer(data.drawArgsBuffer);
+
+    if (data.counterUAV) _renderer->DestroyByteAddressBufferUAV(data.counterUAV);
+    if (data.counterBuffer) _renderer->DestroyByteAddressBuffer(data.counterBuffer);
+
+    if (data.drawArgsUAV) _renderer->DestroyIndirectArgsBufferUAV(data.drawArgsUAV);
+    if (data.drawArgsBuffer) _renderer->DestroyIndirectArgsBuffer(data.drawArgsBuffer);
 
     data = ChunkGpuData();
 }

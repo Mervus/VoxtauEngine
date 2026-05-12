@@ -100,7 +100,6 @@ void ServerInstance::Shutdown() {
     _transports.clear();
 
     if (_physics) {
-        _physics->Shutdown();
         _physics.reset();
     }
 

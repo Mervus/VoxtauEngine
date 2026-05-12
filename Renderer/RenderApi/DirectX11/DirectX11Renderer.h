@@ -233,6 +233,12 @@ public:
     void* CreateRawIndirectArgsBuffer(size_t sizeBytes) override;
     void* CreateRawIndirectArgsBufferUAV(void* buffer) override;
     void CopyStructureCount(void* destBuffer, uint32_t destByteOffset, void* srcUAV) override;
+    void DestroyByteAddressBuffer(void* buffer) override;
+    void DestroyByteAddressBufferUAV(void* uav) override;
+    void DestroyIndirectArgsBuffer(void* buffer) override;
+    void DestroyIndirectArgsBufferUAV(void* uav) override;
+    void DestroyRawIndirectArgsBuffer(void* buffer) override;
+    void DestroyRawIndirectArgsBufferUAV(void* uav) override;
     void UpdateByteAddressBuffer(void* buffer, const void* data, size_t sizeBytes) override;
     void UnbindComputeResources() override;
 
