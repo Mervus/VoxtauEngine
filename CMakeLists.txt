@@ -222,6 +222,7 @@ if(NOT VOXTAU_SERVER_ONLY)
 
             # Demo
             Demo/DemoGameplayScene.cpp
+            Core/Log/Logger.h
     )
 
     target_include_directories(Engine

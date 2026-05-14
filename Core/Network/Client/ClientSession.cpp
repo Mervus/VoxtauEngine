@@ -43,14 +43,13 @@ ClientSession::~ClientSession() {
 
 void ClientSession::Initialize(INetworkTransport* transport) {
     _transport = transport;
-
     // Create a local physics instance for prediction.
     // This runs the same VoxelPhysics code as the server, but only
     // simulates the local player's body. It needs a solid query —
     // for singleplayer, the server's ChunkManager is in-process so
     // we can share the query. For remote, we'd use the client's
     // local chunk data.
-    _predictionPhysics = std::make_unique<VoxelPhysics>();
+    _predictionPhysics = make_unique_logged<VoxelPhysics>();
 
     _interpolator = std::make_unique<EntityInterpolator>();
 

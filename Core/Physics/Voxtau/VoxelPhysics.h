@@ -28,6 +28,8 @@
 #include <vector>
 #include <functional>
 
+#include "Core/Log/Logger.h"
+
 class ChunkManager;
 
 // World query function: (worldX, worldY, worldZ) -> is solid?
@@ -42,8 +44,11 @@ struct VoxelPhysicsConfig {
 };
 
 class VoxelPhysics {
+    Log* _logger = nullptr;
+
 public:
     VoxelPhysics();
+    VoxelPhysics(Log& logger);
     ~VoxelPhysics();
 
     // Initialize with a ChunkManager (convenience — wraps IsSolidAt into a query)
@@ -103,7 +108,7 @@ private:
     // State
     VoxelPhysicsConfig _config;
     VoxelSolidQuery _solidQuery;
-    std::unordered_map<VoxelBodyID, VoxelBody, VoxelBodyIDHash> _bodies;
+    std::unordered_map<VoxelBodyID, VoxelBody, VoxelBodyIDHash> _bodies{};
     uint32_t _nextBodyId = 1;
     float _accumulator = 0.0f;
 };

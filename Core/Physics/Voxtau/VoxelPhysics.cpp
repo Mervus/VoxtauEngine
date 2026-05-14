@@ -15,7 +15,14 @@
 
 // Construction / Initialization
 
-VoxelPhysics::VoxelPhysics() = default;
+VoxelPhysics::VoxelPhysics()
+{
+
+}
+
+VoxelPhysics::VoxelPhysics(Log& logger) : _logger(&logger)
+{
+}
 
 VoxelPhysics::~VoxelPhysics() {
     Shutdown();
@@ -23,7 +30,7 @@ VoxelPhysics::~VoxelPhysics() {
 
 void VoxelPhysics::Initialize(ChunkManager* chunkManager) {
     if (!chunkManager) {
-        std::cerr << "[VoxelPhysics] ERROR: null ChunkManager" << std::endl;
+        _logger->Info("[VoxelPhysics] ERROR: null ChunkManager");
         return;
     }
 
@@ -41,13 +48,13 @@ void VoxelPhysics::Initialize(VoxelSolidQuery solidQuery) {
     _nextBodyId = 1;
     _accumulator = 0.0f;
 
-    std::cout << "[VoxelPhysics] Initialized" << std::endl;
+   _logger->Info("[VoxelPhysics] Initialized");
 }
 
 void VoxelPhysics::Shutdown() {
     _bodies.clear();
     _solidQuery = nullptr;
-    std::cout << "[VoxelPhysics] Shutdown" << std::endl;
+    _logger->Info("[VoxelPhysics] Shutdown");
 }
 
 // Body Management

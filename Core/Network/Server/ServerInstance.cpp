@@ -37,14 +37,14 @@ void ServerInstance::Initialize(const ServerConfig& config) {
     _chunkManager = std::make_unique<ChunkManager>();
     _entityManager = std::make_unique<EntityManager>();
     _entityReplicator = std::make_unique<EntityReplicator>();
-    _physics = std::make_unique<VoxelPhysics>();
+    _physics = make_unique_logged<VoxelPhysics>();
     _physics->Initialize(_chunkManager.get());
 
     _currentTick = 0;
     _accumulator = 0.0f;
 
-    std::cout << "[Server] Initialized (tickRate=" << _config.tickRate
-              << ", maxClients=" << _config.maxClients << ")" << std::endl;
+    _serverLogger.Info("Initialized (tickRate=%.2f, maxClients=%u)",
+                     _config.tickRate, _config.maxClients);
 }
 
 void ServerInstance::SetBlockRegistry(BlockRegistry* registry) {

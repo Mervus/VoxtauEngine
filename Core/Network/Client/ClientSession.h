@@ -12,6 +12,7 @@
 
 #include "EntityInterpolator.h"
 #include "Core/Entity/EntityID.h"
+#include "Core/Log/Logger.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Physics/Voxtau/VoxelBody.h"
 #include "Core/Physics/Voxtau/VoxelPhysics.h"
@@ -26,8 +27,12 @@ class ChunkManager;
 class EntityManager;
 class EntityInterpolator;
 
-class ClientSession
+class ClientSession : public LoggerMixin<ClientSession>
 {
+    Log _clientLogger {Log::LogState::ClientLog};
+public:
+    Log& getLogger() { return _clientLogger; }
+
 public:
     // Events
     std::function<void(EntityID, EntityType)> OnRemoteEntitySpawned;
