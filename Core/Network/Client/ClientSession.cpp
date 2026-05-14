@@ -299,7 +299,7 @@ void ClientSession::ProcessServerSnapshots() {
                             case EntityType::Player:
                                 _localEntityManager->CreateEntityWithID<PlayerEntity>(id, "RemotePlayer");
                                 break;
-                            default: _clientLogger.Error("[Client] Unknown entity type %u", static_cast<int>(type));
+                            default: _clientLogger.Error("[ClientSession] Unknown entity type %u", static_cast<int>(type));
                             }
 
                             _localEntityManager->CreateEntityWithID<PlayerEntity>(id, "RemotePlayer");
@@ -361,7 +361,7 @@ void ClientSession::ProcessServerSnapshots() {
             }
 
             case PacketType::PlayerSpawn: {
-                    std::cout << "[Client] Received PlayerSpawn packet" << std::endl;
+                    _clientLogger.Info("[ClientSession] Received PlayerSpawn packet");
                     // Server telling us which entity is our player
                     PacketSerializer::PlayerSpawnData spawnData;
                     if (PacketSerializer::DeserializePlayerSpawn(event.data, spawnData))
@@ -376,14 +376,12 @@ void ClientSession::ProcessServerSnapshots() {
 
                         SetLocalPlayerEntity(playerId);
 
-                        std::cout << "[Client] Assigned player entity "
-                                    << playerId.Get() << " at ("
-                                    << _spawnPosition.x << ", " << _spawnPosition.y << ", "
-                                    << _spawnPosition.z << ")" << std::endl;
+                        _clientLogger.Info("[ClientSession] Assigned player entity %u at (%u, %u, %u)",
+                            playerId.Get(), spawnData.spawnPos.x, spawnData.spawnPos.y, spawnData.spawnPos.z );
 
                         InitializePrediction(spawnData.spawnPos, 0.6f, 1.8f);
 
-                        std::cout << "[Client] Sending ClientReady on conn=" << _serverConnectionId << std::endl;
+                        _clientLogger.Info("[ClientSession] Sending ClientReady on conn=%u", _serverConnectionId);
 
                         std::vector<uint8_t> readyPacket = { static_cast<uint8_t>(PacketType::ClientReady) };
                         _transport->SendPacket(_serverConnectionId, readyPacket, 1, SendMode::Reliable);
@@ -392,7 +390,7 @@ void ClientSession::ProcessServerSnapshots() {
             }
 
             case PacketType::EntitySpawn: {
-                    std::cout << "[Client] Received EntitySpawn packet" << std::endl;
+                    _clientLogger.Info("[ClientSession] Received EntitySpawn packet");
                     PacketSerializer::EntitySpawnData entitySpawnData;
                     if (PacketSerializer::DeserializeEntitySpawn(event.data, entitySpawnData))
                     {
