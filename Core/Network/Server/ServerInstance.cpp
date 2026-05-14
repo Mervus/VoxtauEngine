@@ -60,7 +60,7 @@ void ServerInstance::GenerateWorld() {
     assert(_worldGenerator);
     // ReSharper disable once CppDFAUnreachableCode
     if (!_chunkManager) {
-        std::cerr << "[Server] Cannot generate world not initialized" << std::endl;
+        _serverLogger.Error("[ServerInstance] Cannot generate world: chunk manager not initialized");
         return;
     }
 
@@ -78,17 +78,13 @@ void ServerInstance::GenerateWorld() {
         }
     }
 
+    _serverLogger.Info("[ServerInstance] Generating world (seed=%u, radius=%u, height=%u)", _config.worldSeed, _config.renderDistance, _config.verticalChunks);
+
     if (_worldGenerator) {
         _worldGenerator->Generate(_chunkManager.get());
     }
 
-    std::cout << "[Server] Generating world (seed=" << _config.worldSeed
-              << ", radius=" << _config.renderDistance
-              << ", height=" << _config.verticalChunks << ")" << std::endl;
-
-
-    std::cout << "[Server] World generated ("
-              << _chunkManager->GetChunks().size() << " chunks)" << std::endl;
+    _serverLogger.Info("[ServerInstance] World generated (%u chunks)", _chunkManager->GetChunks().size());
 }
 
 void ServerInstance::Shutdown() {
@@ -106,7 +102,7 @@ void ServerInstance::Shutdown() {
     _entityManager.reset();
     _chunkManager.reset();
 
-    std::cout << "[Server] Shutdown complete" << std::endl;
+    _serverLogger.Info("[ServerInstance] Shutdown complete");
 }
 
 //  Networking 
@@ -160,11 +156,9 @@ void ServerInstance::Tick(float deltaTime) {
 
 ConnectionID ServerInstance::OnClientConnected(INetworkTransport* transport, ConnectionID transportConnId) {
     if (_clients.size() >= _config.maxClients) {
-        std::cerr << "[Server] Rejecting connection — server full ("
-                  << _config.maxClients << " max)" << std::endl;
+        _serverLogger.Error("[ServerInstance] Client connection rejected: server full (max=%u)", _config.maxClients);
         return INVALID_CONNECTION;
     }
-    std::cout << "[Server] OnClientConnected: _nextConnectionId=" << _nextConnectionId << std::endl;
 
     ConnectionID connId = _nextConnectionId++;
 
@@ -175,8 +169,6 @@ ConnectionID ServerInstance::OnClientConnected(INetworkTransport* transport, Con
     proxy->state = ClientProxy::State::Connected;
 
     _clients[connId] = std::move(proxy);
-
-    std::cout << "[Server] Client " << connId << " connected" << std::endl;
 
     // Spawn a player entity for this client
     EntityID playerId = SpawnPlayer(connId);
@@ -214,6 +206,7 @@ ConnectionID ServerInstance::OnClientConnected(INetworkTransport* transport, Con
         otherProxy->transport->SendPacket(
             otherProxy->transportConnId, packet, 1, SendMode::Reliable);
     }
+    _serverLogger.Info("[ServerInstance:OnClientConnected] Client connected: %u clients", _clients.size());
 
     return connId;
 }
@@ -222,7 +215,7 @@ void ServerInstance::OnClientDisconnected(ConnectionID id) {
     auto it = _clients.find(id);
     if (it == _clients.end()) return;
 
-    std::cout << "[Server] Client " << id << " disconnected" << std::endl;
+    _serverLogger.Info("[ServerInstance:OnClientDisconnected] Client disconnected: %u clients", _clients.size());
 
     DespawnPlayer(id);
     _clients.erase(it);
@@ -289,7 +282,7 @@ void ServerInstance::ProcessIncomingPackets() {
                 }
 
                 case PacketType::ClientReady: {
-                        std::cout << "[Server] Client " << proxy->connectionId << " ready" << std::endl;
+                        _serverLogger.Info("[ServerInstance:ProcessIncomingPackets] Client %u ready", proxy->connectionId);
                         proxy->state = ClientProxy::State::InGame;
                         break;
                 }
@@ -499,8 +492,7 @@ void ServerInstance::StreamChunks() {
         if (proxy->chunkSendQueue.empty()) {
             static bool s_warnedNoChunks = false;
             if (_chunkManager->GetChunks().empty() && !s_warnedNoChunks) {
-                std::cerr << "[Server] WARNING: StreamChunks chunk manager is empty. "
-                             "Did you call GenerateWorld()?" << std::endl;
+                _serverLogger.Error("[ServerInstance:StreamChunks] No chunks generated yet!");
                 s_warnedNoChunks = true;
             }
             for (const auto& [chunkPos, chunk] : _chunkManager->GetChunks()) {
@@ -571,8 +563,7 @@ EntityID ServerInstance::SpawnPlayer(ConnectionID client)
     it->second->playerEntity = playerId;
     it->second->state = ClientProxy::State::InGame;
 
-    std::cout << "[Server] Spawned player (entity=" << playerId.Get()<< ") for client " << client <<
-          " at position: " << spawnPos << std::endl;
+    _serverLogger.Info("[ServerInstance:SpawnPlayer] Spawned player (entity=%u) at position: %s for client %u", playerId.Get(), Str(spawnPos).c_str(), client);
 
     return playerId;
 }
@@ -600,5 +591,5 @@ void ServerInstance::DespawnPlayer(ConnectionID client) {
     it->second->playerEntity = EntityID();
     it->second->state = ClientProxy::State::Connected;
 
-    std::cout << "[Server] Despawned player for client " << client << std::endl;
+    _serverLogger.Info("[ServerInstance:DespawnPlayer] Despawned player (entity=%u) for client %u", playerId.Get(), client);
 }

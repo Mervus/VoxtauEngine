@@ -85,6 +85,12 @@ namespace Math {
         //"(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")"
         return outs << "(" + std::to_string(obj.x) + ", " + std::to_string(obj.y) + ", " + std::to_string(obj.z) + ")";
     }
+
+    inline std::string Str(const Vector3& v) {
+        char b[64];
+        std::snprintf(b, sizeof(b), "%.2f, %.2f, %.2f", v.x, v.y, v.z);
+        return b;
+    }
 }
 
 
