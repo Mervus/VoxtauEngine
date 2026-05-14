@@ -64,7 +64,7 @@ void ClientSession::Initialize(INetworkTransport* transport) {
     _lastAckedServerTick = 0;
     _connected = false;
 
-    std::cout << "[Client] Initialized" << std::endl;
+    _clientLogger.Info("[ClientSession] Initialized");
 }
 
 void ClientSession::InitializePrediction(const Math::Vector3& startPos, float bodyWidth, float bodyHeight) {
@@ -80,9 +80,8 @@ void ClientSession::InitializePrediction(const Math::Vector3& startPos, float bo
     _simulationPosition = startPos;
     _visualPosition = startPos;
 
-    std::cout << "[Client] Prediction body: " << _predictionBody.value << std::endl;
-    std::cout << "[Client] Prediction initialized at ("
-              << startPos.x << ", " << startPos.y << ", " << startPos.z << ")" << std::endl;
+    _clientLogger.Info("[ClientSession] Prediction body: %u", _predictionBody.value);
+    _clientLogger.Info("[ClientSession] Prediction initialized at: %u, %u, %u", startPos.x, startPos.y, startPos.z);
 }
 
 void ClientSession::Shutdown() {
@@ -94,7 +93,7 @@ void ClientSession::Shutdown() {
     _interpolator.reset();
     _connected = false;
 
-    std::cout << "[Client] Shutdown" << std::endl;
+    _clientLogger.Info("[ClientSession] Shutdown");
 }
 
 void ClientSession::Connect(const std::string& address, uint16_t port) {
@@ -242,12 +241,13 @@ void ClientSession::ProcessServerSnapshots() {
         case NetworkEvent::Type::Connected:
             _connected = true;
             _serverConnectionId = event.connection;
-            std::cout << "[Client] Connected to server" << std::endl;
+            //_clientLogger.Info("[ClientSession] Connected to server: %s:%u", event.address.c_str(), event.port);
+            _clientLogger.Info("[ClientSession] Connected to server");
             break;
 
         case NetworkEvent::Type::Disconnected:
             _connected = false;
-            std::cout << "[Client] Disconnected from server" << std::endl;
+            _clientLogger.Info("[ClientSession] Disconnected from server");
             break;
 
         case NetworkEvent::Type::DataReceived:
@@ -299,7 +299,7 @@ void ClientSession::ProcessServerSnapshots() {
                             case EntityType::Player:
                                 _localEntityManager->CreateEntityWithID<PlayerEntity>(id, "RemotePlayer");
                                 break;
-                            default: std::cerr << "[Client] Unknown entity type " << static_cast<int>(type) << std::endl;
+                            default: _clientLogger.Error("[Client] Unknown entity type %u", static_cast<int>(type));
                             }
 
                             _localEntityManager->CreateEntityWithID<PlayerEntity>(id, "RemotePlayer");
