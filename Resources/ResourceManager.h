@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "BlockRegistry.h"
+#include "Core/Log/Logger.h"
 
 class ShaderCollection;
 class Mesh;
@@ -39,6 +40,8 @@ public:
 
     BlockRegistry* GetBlockRegistry() const { return _blockRegistry; };
 private:
+    Log _logger {Log::ClientLog};
+
     IRendererApi* _renderer = nullptr;
     ShaderCollection* _shaderCollection = nullptr;
     BlockRegistry* _blockRegistry = nullptr;

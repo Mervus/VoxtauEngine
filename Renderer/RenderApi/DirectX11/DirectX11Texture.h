@@ -8,12 +8,14 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <string>
+#include "Core/Log/Logger.h"
 
 template<typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 class DirectX11Texture {
 private:
+    Log _logger {Log::ClientLog};
     ComPtr<ID3D11Texture2D> texture;
     ComPtr<ID3D11ShaderResourceView> srv;
     ComPtr<ID3D11SamplerState> sampler;

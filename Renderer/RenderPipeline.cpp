@@ -25,8 +25,6 @@
 #include "Resources/TextureArray.h"
 #include "Entity/EntityRenderer.h"
 
-#include <iostream>
-
 
 RenderPipeline::RenderPipeline(IRendererApi* renderer, ShaderCollection* shaderCollection)
     : _renderer(renderer)
@@ -75,7 +73,7 @@ void RenderPipeline::Initialize(int width, int height)
         shaderPath + "Entity/entity.vert.hlsl",
         shaderPath + "Entity/entity.pixel.hlsl");
 
-    std::cout << "[Client] RenderPipeline initialized (" << width << "x" << height << ")" << std::endl;
+    _logger.Info("[RenderPipeline] initialized (%dx%d)", width, height);
 }
 
 void RenderPipeline::Shutdown()
@@ -162,7 +160,7 @@ void RenderPipeline::Execute(float deltaTime, float totalTime)
     PROFILE_FUNCTION();
 
     if (!_camera) {
-        std::cerr << "RenderPipeline::Execute — no camera set!" << std::endl;
+        _logger.Error("[RenderPipeline] Execute - no camera set!");
         return;
     }
 

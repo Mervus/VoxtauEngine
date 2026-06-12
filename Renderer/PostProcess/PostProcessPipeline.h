@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include "Core/Log/Logger.h"
 #include "Core/Math/MathTypes.h"
 
 class IRendererApi;
@@ -80,6 +81,8 @@ public:
     int GetHeight() const { return _height; }
 
 private:
+    Log _logger {Log::ClientLog};
+
     IRendererApi* _renderer;
     ShaderCollection* _shaderCollection;
 

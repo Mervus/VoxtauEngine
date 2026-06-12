@@ -16,14 +16,14 @@ class Log
 public:
     enum LogState
     {
-        ClientLog, ServerLog, UnknownLog
+        ClientLog, ServerLog
     };
 
 public:
-    Log() = default;
-    Log(LogState logState) : state(logState) { };
+    Log() = delete;
+    explicit Log(LogState logState) : state(logState) { };
 
-    LogState state = UnknownLog;
+    LogState state;
 
     /**
      * Print a printf-style formatted message, prefixed with [CLIENT] or [SERVER].
@@ -69,9 +69,8 @@ private:
         std::string res;
         switch (state)
         {
-            case ClientLog: res = "{CLIENT} ";   break;
-            case ServerLog: res = "{SERVER} ";   break;
-            case UnknownLog: res = "{UNKNOWN} "; break;
+            case ClientLog: res = "{CLIENT} "; break;
+            case ServerLog: res = "{SERVER} "; break;
         };
 
         return res;

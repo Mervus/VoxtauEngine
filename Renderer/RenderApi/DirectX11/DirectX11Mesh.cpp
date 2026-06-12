@@ -2,7 +2,6 @@
 // Created by Marvin on 28/01/2026.
 //
 #include "DirectX11Mesh.h"
-#include <iostream>
 
 DirectX11Mesh::DirectX11Mesh()
     : vertexCount(0)
@@ -49,9 +48,8 @@ bool DirectX11Mesh::CreateBuffers(
 
     HRESULT hr = device->CreateBuffer(&vbDesc, &vbData, &vertexBuffer);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create vertex buffer! HRESULT: 0x" << std::hex << hr << std::dec
-                  << " vertices: " << vertexCount << " stride: " << vertexStride
-                  << " bytes: " << (vertexStride * vertexCount) << std::endl;
+        _logger.Error("[DirectX11Mesh] Failed to create vertex buffer! HRESULT: 0x%08lx vertices: %u stride: %u bytes: %u",
+                      static_cast<unsigned long>(hr), vertexCount, vertexStride, vertexStride * vertexCount);
         return false;
     }
 
@@ -72,7 +70,7 @@ bool DirectX11Mesh::CreateBuffers(
 
         hr = device->CreateBuffer(&ibDesc, &ibData, &indexBuffer);
         if (FAILED(hr)) {
-            std::cerr << "Failed to create index buffer!" << std::endl;
+            _logger.Error("[DirectX11Mesh] Failed to create index buffer!");
             return false;
         }
     }
@@ -86,7 +84,7 @@ bool DirectX11Mesh::UpdateVertexBuffer(
     UINT vertexCount)
 {
     if (!vertexBuffer) {
-        std::cerr << "Vertex buffer not created yet!" << std::endl;
+        _logger.Error("[DirectX11Mesh] Vertex buffer not created yet!");
         return false;
     }
 
@@ -105,7 +103,7 @@ bool DirectX11Mesh::UpdateIndexBuffer(
     UINT indexCount)
 {
     if (!indexBuffer) {
-        std::cerr << "Index buffer not created yet!" << std::endl;
+        _logger.Error("[DirectX11Mesh] Index buffer not created yet!");
         return false;
     }
 
@@ -149,7 +147,7 @@ bool DirectX11Mesh::CreateInputLayout(
     );
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create input layout!" << std::endl;
+        _logger.Error("[DirectX11Mesh] Failed to create input layout!");
         return false;
     }
 
@@ -183,7 +181,7 @@ bool DirectX11Mesh::CreateVoxelInputLayout(ID3D11Device* device, const void* ver
     );
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create voxel vertex input layout!" << std::endl;
+        _logger.Error("[DirectX11Mesh] Failed to create voxel vertex input layout!");
         return false;
     }
 
@@ -206,8 +204,8 @@ bool DirectX11Mesh::CreateInputLayoutFromDesc(ID3D11Device* device, const D3D11_
     );
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create input layout! HRESULT: 0x"
-                  << std::hex << hr << std::dec << std::endl;
+        _logger.Error("[DirectX11Mesh] Failed to create input layout! HRESULT: 0x%08lx",
+                      static_cast<unsigned long>(hr));
         return false;
     }
 

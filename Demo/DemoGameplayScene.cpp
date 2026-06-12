@@ -4,8 +4,6 @@
 
 #include "DemoGameplayScene.h"
 
-#include <iostream>
-
 #include "Core/Entity/EntityManager.h"
 #include "Core/Entity/Living/Player/PlayerEntity.h"
 #include "Core/Entity/Living/Player/PlayerController.h"
@@ -87,7 +85,7 @@ DemoGameplayScene::~DemoGameplayScene()
 
 void DemoGameplayScene::OnInit()
 {
-    std::cout << "[Demo] Initializing..." << std::endl;
+    logger->Info("[Demo] Initializing...");
 
     // Sky
     _skyRenderer = new SkyRenderer(renderer, shaderCollection);
@@ -134,7 +132,7 @@ void DemoGameplayScene::OnInit()
 
     inputManager->SetMouseCaptured(true);
 
-    std::cout << "[Demo] Ready." << std::endl;
+    logger->Info("[Demo] Ready.");
 }
 
 void DemoGameplayScene::OnDestroy()
@@ -195,7 +193,7 @@ void DemoGameplayScene::Render(float deltaTime)
 
 void DemoGameplayScene::SetupBlockRegistry()
 {
-    _blockRegistry = new BlockRegistry();
+    _blockRegistry = new BlockRegistry(*logger);
     _blockRegistry->LoadFromFile("Assets/Data/blocks.json");
 
     _blockTextureArray = new TextureArray("BlockTextures");

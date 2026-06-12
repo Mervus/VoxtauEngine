@@ -8,6 +8,7 @@
 #include <memory>
 #include <EngineApi.h>
 
+#include "Log/Logger.h"
 #include "GLFW/glfw3.h"
 #include "Input/InputManager.h"
 #include "Network/NetContext.h"
@@ -28,6 +29,8 @@ class VoxelShadowSystem;
 class Application
 {
 private:
+    Log _logger {Log::ClientLog};
+
     void* _windowHandle;
     int _windowWidth;
     int _windowHeight;

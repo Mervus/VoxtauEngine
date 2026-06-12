@@ -10,6 +10,8 @@
 #include <vector>
 #include <cstdint>
 
+#include "Core/Log/Logger.h"
+
 namespace enki { class TaskScheduler; class ITaskSet; }
 
 /// Opaque handle to a scheduled job.
@@ -61,6 +63,7 @@ private:
 
     void CleanupCompleted();
 
+    Log _logger {Log::ClientLog};
     std::unique_ptr<enki::TaskScheduler> _scheduler;
     std::vector<std::shared_ptr<enki::ITaskSet>> _activeTasks;
 };

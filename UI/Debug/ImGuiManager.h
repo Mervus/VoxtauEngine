@@ -7,9 +7,11 @@
 
 #pragma once
 #include <d3d11.h>
+#include "Core/Log/Logger.h"
 
 class ImGuiManager {
 private:
+    Log _logger {Log::ClientLog};
     bool initialized;
 
 public:

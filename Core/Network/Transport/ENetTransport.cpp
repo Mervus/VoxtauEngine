@@ -4,16 +4,14 @@
 
 #include "ENetTransport.h"
 
-#include <iostream>
-
 // ENet must be initialized once globally
 static bool s_enetInitialized = false;
 static int s_enetRefCount = 0;
 
-static void EnsureENetInit() {
+static void EnsureENetInit(Log& logger) {
     if (!s_enetInitialized) {
         if (enet_initialize() != 0) {
-            std::cerr << "[ENet] Failed to initialize!" << std::endl;
+            logger.Error("[ENet] Failed to initialize!");
             return;
         }
         s_enetInitialized = true;
@@ -32,14 +30,14 @@ static void ENetRelease() {
 
 //  Lifecycle 
 
-ENetTransport::ENetTransport() = default;
+ENetTransport::ENetTransport(Log& logger) : _logger(logger) {}
 
 ENetTransport::~ENetTransport() {
     Shutdown();
 }
 
 bool ENetTransport::Initialize(uint16_t port, uint32_t maxConnections) {
-    EnsureENetInit();
+    EnsureENetInit(_logger);
 
     if (port > 0) {
         // Server mode: listen on port
@@ -51,25 +49,24 @@ bool ENetTransport::Initialize(uint16_t port, uint32_t maxConnections) {
 
         _host = enet_host_create(&address, maxConnections, CHANNEL_COUNT, 0, 0);
         if (!_host) {
-            std::cerr << "[ENet] Failed to create server on port " << port << std::endl;
+            _logger.Error("[ENet] Failed to create server on port %u", port);
             ENetRelease();
             return false;
         }
 
-        std::cout << "[ENet] Server listening on port " << port
-                  << " (max " << maxConnections << " clients)" << std::endl;
+        _logger.Info("[ENet] Server listening on port %u (max %u clients)", port, maxConnections);
     } else {
         // Client mode: no listening, just outgoing connections
         _isServer = false;
 
         _host = enet_host_create(nullptr, maxConnections, CHANNEL_COUNT, 0, 0);
         if (!_host) {
-            std::cerr << "[ENet] Failed to create client host" << std::endl;
+            _logger.Error("[ENet] Failed to create client host");
             ENetRelease();
             return false;
         }
 
-        std::cout << "[ENet] Client host created" << std::endl;
+        _logger.Info("[ENet] Client host created");
     }
 
     return true;
@@ -99,7 +96,7 @@ void ENetTransport::Shutdown() {
 
     ENetRelease();
 
-    std::cout << "[ENet] Shutdown complete" << std::endl;
+    _logger.Info("[ENet] Shutdown complete");
 }
 
 //  Client Side 
@@ -110,7 +107,7 @@ ConnectionID ENetTransport::Connect(const std::string& address, uint16_t port) {
     ENetAddress enetAddr;
     if (enet_address_set_host(&enetAddr, address.c_str()) != 0)
     {
-        std::cerr << "[ENet] Invalid host: " << address << std::endl;
+        _logger.Error("[ENet] Invalid host: %s", address.c_str());
         return 0;
     }
 
@@ -118,8 +115,7 @@ ConnectionID ENetTransport::Connect(const std::string& address, uint16_t port) {
 
     ENetPeer* peer = enet_host_connect(_host, &enetAddr, CHANNEL_COUNT, 0);
     if (!peer) {
-        std::cerr << "[ENet] Failed to initiate connection to "
-                  << address << ":" << port << std::endl;
+        _logger.Error("[ENet] Failed to initiate connection to %s:%u", address.c_str(), port);
         return 0;
     }
 
@@ -128,8 +124,7 @@ ConnectionID ENetTransport::Connect(const std::string& address, uint16_t port) {
     _peers[connId] = peer;
     _peerToConn[peer] = connId;
 
-    std::cout << "[ENet] Connecting to " << address << ":" << port
-              << " (conn=" << connId << ")" << std::endl;
+    _logger.Info("[ENet] Connecting to %s:%u (conn=%u)", address.c_str(), port, connId);
 
     return connId;
 }
@@ -188,9 +183,8 @@ void ENetTransport::PollEvents(std::vector<NetworkEvent>& outEvents) {
 
             char hostname[256];
             enet_address_get_host_ip(&event.peer->address, hostname, sizeof(hostname));
-            std::cout << "[ENet] Peer connected: " << hostname
-                      << ":" << event.peer->address.port
-                      << " (conn=" << connId << ")" << std::endl;
+            _logger.Info("[ENet] Peer connected: %s:%u (conn=%u)",
+                         hostname, event.peer->address.port, connId);
             break;
         }
 
@@ -226,7 +220,7 @@ void ENetTransport::PollEvents(std::vector<NetworkEvent>& outEvents) {
                 _peerToConn.erase(peerIt);
             }
 
-            std::cout << "[ENet] Peer disconnected (conn=" << connId << ")" << std::endl;
+            _logger.Info("[ENet] Peer disconnected (conn=%u)", connId);
             break;
         }
 

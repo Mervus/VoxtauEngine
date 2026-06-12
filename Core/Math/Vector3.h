@@ -62,8 +62,6 @@ namespace Math {
         float Distance(const Vector3& other) const;
         float DistanceSquared(const Vector3& other) const;
 
-        void toConsole() const;
-
         // Static functions
         static float Dot(const Vector3& a, const Vector3& b);
         static Vector3 Cross(const Vector3& a, const Vector3& b);

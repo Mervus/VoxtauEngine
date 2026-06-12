@@ -3,6 +3,7 @@
 //
 
 #include "ModelLoader.h"
+#include "Core/Log/Logger.h"
 #include "Resources/SkinnedMesh.h"
 #include "Resources/Mesh.h"
 #include "Resources/TextureData.h"
@@ -14,11 +15,12 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include <iostream>
 #include <unordered_map>
 #include <chrono>
 #include <cmath>
 #include <filesystem>
+
+static Log s_logger {Log::ClientLog};
 
 // Helper: Convert Assimp types to engine types
 static Math::Vector3 ToVec3(const aiVector3D& v) {
@@ -197,9 +199,8 @@ ExtractAnimations(const aiScene* scene, const std::string& filepath) {
 
         clips.push_back(clip);
 
-        std::cout << "ModelLoader: Loaded animation '" << clip->name
-                  << "' (" << clip->channels.size() << " channels, "
-                  << clip->GetDurationSeconds() << "s)" << std::endl;
+        s_logger.Info("[ModelLoader] Loaded animation '%s' (%zu channels, %.3fs)",
+                      clip->name.c_str(), clip->channels.size(), clip->GetDurationSeconds());
     }
     return clips;
 }
@@ -209,7 +210,7 @@ SkinnedModelData ModelLoader::LoadSkinnedModel(const std::string& filepath) {
     SkinnedModelData result;
 
     auto t0 = std::chrono::high_resolution_clock::now();
-    std::cout << "ModelLoader: Reading file " << filepath << " ..." << std::endl;
+    s_logger.Info("[ModelLoader] Reading file %s ...", filepath.c_str());
 
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(filepath,
@@ -221,11 +222,11 @@ SkinnedModelData ModelLoader::LoadSkinnedModel(const std::string& filepath) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
     auto readMs = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-    std::cout << "ModelLoader: ReadFile completed in " << readMs << " ms" << std::endl;
+    s_logger.Info("[ModelLoader] ReadFile completed in %lld ms", static_cast<long long>(readMs));
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "ModelLoader: Failed to load: " << filepath
-                  << " — " << importer.GetErrorString() << std::endl;
+        s_logger.Error("[ModelLoader] Failed to load: %s - %s",
+                       filepath.c_str(), importer.GetErrorString());
         return result;
     }
 
@@ -235,8 +236,8 @@ SkinnedModelData ModelLoader::LoadSkinnedModel(const std::string& filepath) {
         totalVerts += scene->mMeshes[m]->mNumVertices;
         totalFaces += scene->mMeshes[m]->mNumFaces;
     }
-    std::cout << "ModelLoader: Scene has " << scene->mNumMeshes << " meshes, "
-              << totalVerts << " vertices, " << totalFaces << " faces" << std::endl;
+    s_logger.Info("[ModelLoader] Scene has %u meshes, %u vertices, %u faces",
+                  scene->mNumMeshes, totalVerts, totalFaces);
 
     //  Step 1: Collect all bone offset matrices across all meshes
     auto tStep = std::chrono::high_resolution_clock::now();
@@ -251,7 +252,7 @@ SkinnedModelData ModelLoader::LoadSkinnedModel(const std::string& filepath) {
         }
     }
 
-    std::cout << "ModelLoader: Found " << boneOffsetMap.size() << " bones" << std::endl;
+    s_logger.Info("[ModelLoader] Found %zu bones", boneOffsetMap.size());
 
     //  Step 2: Build skeleton from node hierarchy
     auto skeleton = std::make_shared<Skeleton>();
@@ -265,15 +266,14 @@ SkinnedModelData ModelLoader::LoadSkinnedModel(const std::string& filepath) {
         // Second pass: build the skeleton from relevant nodes only
         BuildSkeletonRecursive(scene->mRootNode, -1,
                                *skeleton, boneOffsetMap, relevantNodes);
-        std::cout << "ModelLoader: Built skeleton with " << skeleton->GetBoneCount()
-                  << " bones" << std::endl;
+        s_logger.Info("[ModelLoader] Built skeleton with %d bones", skeleton->GetBoneCount());
     }
 
     result.skeleton = skeleton;
 
     auto tSkel = std::chrono::high_resolution_clock::now();
     auto skelMs = std::chrono::duration_cast<std::chrono::milliseconds>(tSkel - tStep).count();
-    std::cout << "ModelLoader: Skeleton built in " << skelMs << " ms" << std::endl;
+    s_logger.Info("[ModelLoader] Skeleton built in %lld ms", static_cast<long long>(skelMs));
 
     //  Step 3: Load mesh data
     // Combine all meshes in the scene into one SkinnedMesh
@@ -323,8 +323,7 @@ SkinnedModelData ModelLoader::LoadSkinnedModel(const std::string& filepath) {
 
             if (boneIndex < 0) {
                 // This shouldn't happen if skeleton was built correctly
-                std::cerr << "ModelLoader: Warning — bone '" << boneName
-                          << "' not found in skeleton" << std::endl;
+                s_logger.Error("[ModelLoader] bone '%s' not found in skeleton", boneName.c_str());
                 continue;
             }
 
@@ -353,17 +352,16 @@ SkinnedModelData ModelLoader::LoadSkinnedModel(const std::string& filepath) {
 
     auto tMesh = std::chrono::high_resolution_clock::now();
     auto meshMs = std::chrono::duration_cast<std::chrono::milliseconds>(tMesh - tSkel).count();
-    std::cout << "ModelLoader: Mesh data processed in " << meshMs << " ms" << std::endl;
+    s_logger.Info("[ModelLoader] Mesh data processed in %lld ms", static_cast<long long>(meshMs));
 
     // Create SkinnedMesh
     auto* skinnedMesh = new SkinnedMesh(filepath);
     skinnedMesh->SetSkinnedData(allVertices, allIndices);
     result.mesh = skinnedMesh;
 
-    std::cout << "ModelLoader: Loaded mesh from " << filepath
-              << " (" << allVertices.size() << " vertices, "
-              << allIndices.size() / 3 << " triangles, "
-              << skeleton->GetBoneCount() << " bones)" << std::endl;
+    s_logger.Info("[ModelLoader] Loaded mesh from %s (%zu vertices, %zu triangles, %d bones)",
+                  filepath.c_str(), allVertices.size(), allIndices.size() / 3,
+                  skeleton->GetBoneCount());
 
     // Step 4: Extract embedded animations
     result.animations = ExtractAnimations(scene, filepath);
@@ -380,13 +378,13 @@ ModelLoader::LoadAnimations(const std::string& filepath,
     );
 
     if (!scene) {
-        std::cerr << "ModelLoader: Failed to load animations from: " << filepath
-                  << " — " << importer.GetErrorString() << std::endl;
+        s_logger.Error("[ModelLoader] Failed to load animations from: %s - %s",
+                       filepath.c_str(), importer.GetErrorString());
         return {};
     }
 
     if (scene->mNumAnimations == 0) {
-        std::cerr << "ModelLoader: No animations found in: " << filepath << std::endl;
+        s_logger.Error("[ModelLoader] No animations found in: %s", filepath.c_str());
         return {};
     }
 
@@ -399,9 +397,8 @@ ModelLoader::LoadAnimations(const std::string& filepath,
             if (skeleton->GetBoneIndex(channel.boneName) >= 0)
                 matched++;
         }
-        std::cout << "ModelLoader: Animation '" << clip->name
-                  << "' - " << matched << "/" << clip->channels.size()
-                  << " channels matched skeleton" << std::endl;
+        s_logger.Info("[ModelLoader] Animation '%s' - %d/%zu channels matched skeleton",
+                      clip->name.c_str(), matched, clip->channels.size());
     }
 
     return clips;
@@ -410,7 +407,7 @@ ModelLoader::LoadAnimations(const std::string& filepath,
 // LoadStaticMesh — non-skinned mesh via Assimp (replaces OBJ loader)
 Mesh* ModelLoader::LoadStaticMesh(const std::string& filepath) {
     auto t0 = std::chrono::high_resolution_clock::now();
-    std::cout << "ModelLoader: Reading static mesh " << filepath << " ..." << std::endl;
+    s_logger.Info("[ModelLoader] Reading static mesh %s ...", filepath.c_str());
 
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(filepath,
@@ -421,21 +418,21 @@ Mesh* ModelLoader::LoadStaticMesh(const std::string& filepath) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
     auto readMs = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-    std::cout << "ModelLoader: ReadFile completed in " << readMs << " ms" << std::endl;
+    s_logger.Info("[ModelLoader] ReadFile completed in %lld ms", static_cast<long long>(readMs));
 
     for (unsigned int i = 0; i < scene->mNumTextures; i++)
-        std::cout << "  Embedded texture: " << scene->mTextures[i]->mFilename.C_Str() <<
-    std::endl;
+        s_logger.Info("[ModelLoader]   Embedded texture: %s",
+                      scene->mTextures[i]->mFilename.C_Str());
 
     for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
         aiString path;
         if (scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &path))
-            std::cout << "  Material diffuse: " << path.C_Str() << std::endl;
+            s_logger.Info("[ModelLoader]   Material diffuse: %s", path.C_Str());
     }
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "ModelLoader: Failed to load static mesh: " << filepath
-                  << " — " << importer.GetErrorString() << std::endl;
+        s_logger.Error("[ModelLoader] Failed to load static mesh: %s - %s",
+                       filepath.c_str(), importer.GetErrorString());
         return nullptr;
     }
 
@@ -475,9 +472,8 @@ Mesh* ModelLoader::LoadStaticMesh(const std::string& filepath) {
     auto* outMesh = new Mesh(filepath);
     outMesh->SetData(allVertices, allIndices);
 
-    std::cout << "ModelLoader: Loaded static mesh " << filepath
-              << " (" << allVertices.size() << " verts, "
-              << allIndices.size() / 3 << " tris)" << std::endl;
+    s_logger.Info("[ModelLoader] Loaded static mesh %s (%zu verts, %zu tris)",
+                  filepath.c_str(), allVertices.size(), allIndices.size() / 3);
 
     return outMesh;
 }
@@ -508,9 +504,8 @@ static std::unique_ptr<TextureData> ExtractDiffuseTexture(
                 if (texData->LoadFromMemory(
                         reinterpret_cast<const uint8_t*>(embedded->pcData),
                         embedded->mWidth)) {
-                    std::cout << "ModelLoader: Extracted embedded texture ("
-                              << texData->GetWidth() << "x" << texData->GetHeight()
-                              << ")" << std::endl;
+                    s_logger.Info("[ModelLoader] Extracted embedded texture (%dx%d)",
+                                  texData->GetWidth(), texData->GetHeight());
                     return texData;
                 }
             } else {
@@ -526,8 +521,7 @@ static std::unique_ptr<TextureData> ExtractDiffuseTexture(
                     rgba[p * 4 + 3] = t.a;
                 }
                 texData->Create(w, h, 4, rgba.data());
-                std::cout << "ModelLoader: Extracted raw embedded texture ("
-                          << w << "x" << h << ")" << std::endl;
+                s_logger.Info("[ModelLoader] Extracted raw embedded texture (%dx%d)", w, h);
                 return texData;
             }
         }
@@ -538,11 +532,11 @@ static std::unique_ptr<TextureData> ExtractDiffuseTexture(
 
         auto texData = std::make_unique<TextureData>();
         if (texData->LoadFromFile(fullPath.string())) {
-            std::cout << "ModelLoader: Loaded external texture " << fullPath << std::endl;
+            s_logger.Info("[ModelLoader] Loaded external texture %s", fullPath.string().c_str());
             return texData;
         }
 
-        std::cerr << "ModelLoader: Failed to load texture " << fullPath << std::endl;
+        s_logger.Error("[ModelLoader] Failed to load texture %s", fullPath.string().c_str());
     }
 
     return nullptr;
@@ -554,7 +548,7 @@ ModelResult ModelLoader::LoadModel(const std::string& filepath) {
     ModelResult result;
 
     auto t0 = std::chrono::high_resolution_clock::now();
-    std::cout << "ModelLoader::LoadModel: Reading " << filepath << " ..." << std::endl;
+    s_logger.Info("[ModelLoader::LoadModel] Reading %s ...", filepath.c_str());
 
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(filepath,
@@ -566,11 +560,12 @@ ModelResult ModelLoader::LoadModel(const std::string& filepath) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
     auto readMs = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-    std::cout << "ModelLoader::LoadModel: ReadFile completed in " << readMs << " ms" << std::endl;
+    s_logger.Info("[ModelLoader::LoadModel] ReadFile completed in %lld ms",
+                  static_cast<long long>(readMs));
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "ModelLoader::LoadModel: Failed to load: " << filepath
-                  << " — " << importer.GetErrorString() << std::endl;
+        s_logger.Error("[ModelLoader::LoadModel] Failed to load: %s - %s",
+                       filepath.c_str(), importer.GetErrorString());
         return result;
     }
 
@@ -605,8 +600,8 @@ ModelResult ModelLoader::LoadModel(const std::string& filepath) {
         BuildSkeletonRecursive(scene->mRootNode, -1, *skeleton, boneOffsetMap, relevantNodes);
         result.skeleton = skeleton;
 
-        std::cout << "ModelLoader::LoadModel: Built skeleton with "
-                  << skeleton->GetBoneCount() << " bones" << std::endl;
+        s_logger.Info("[ModelLoader::LoadModel] Built skeleton with %d bones",
+                      skeleton->GetBoneCount());
 
         // Fix FBX unit mismatch: Assimp may scale mesh data (cm->m) while
         // leaving node transforms in native units.  Detect by comparing the
@@ -624,8 +619,8 @@ ModelResult ModelLoader::LoadModel(const std::string& filepath) {
             if (scaleFactor > 1.5f || scaleFactor < 0.67f) {
                 float correction = 1.0f / scaleFactor;
                 skeleton->ApplyRootScale(correction);
-                std::cout << "ModelLoader: FBX unit correction applied ("
-                          << scaleFactor << "x -> root scale " << correction << ")" << std::endl;
+                s_logger.Info("[ModelLoader] FBX unit correction applied (%.3fx -> root scale %.3f)",
+                              scaleFactor, correction);
             }
             break;
         }
@@ -693,9 +688,8 @@ ModelResult ModelLoader::LoadModel(const std::string& filepath) {
         // Step 4: Extract animations
         result.animations = ExtractAnimations(scene, filepath);
 
-        std::cout << "ModelLoader::LoadModel: Skinned mesh loaded ("
-                  << allVertices.size() << " verts, "
-                  << allIndices.size() / 3 << " tris)" << std::endl;
+        s_logger.Info("[ModelLoader::LoadModel] Skinned mesh loaded (%zu verts, %zu tris)",
+                      allVertices.size(), allIndices.size() / 3);
 
     } else {
         // ── Static path ──
@@ -744,9 +738,8 @@ ModelResult ModelLoader::LoadModel(const std::string& filepath) {
         outMesh->SetData(allVertices, allIndices);
         result.mesh = outMesh;
 
-        std::cout << "ModelLoader::LoadModel: Static mesh loaded ("
-                  << allVertices.size() << " verts, "
-                  << allIndices.size() / 3 << " tris)" << std::endl;
+        s_logger.Info("[ModelLoader::LoadModel] Static mesh loaded (%zu verts, %zu tris)",
+                      allVertices.size(), allIndices.size() / 3);
     }
 
     // Extract diffuse texture from materials

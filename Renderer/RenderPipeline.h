@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <functional>
+#include "Core/Log/Logger.h"
 #include "Core/Math/MathTypes.h"
 #include "Core/Math/Matrix4x4.h"
 
@@ -78,6 +79,8 @@ public:
      */
     void SetChunkManager(ChunkManager* cm);
 private:
+    Log _logger {Log::ClientLog};
+
     IRendererApi* _renderer;
     ShaderCollection* _shaderCollection;
 

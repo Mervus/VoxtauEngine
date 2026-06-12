@@ -9,7 +9,6 @@
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
-#include <iostream>
 
 ImGuiManager::ImGuiManager()
     : initialized(false)
@@ -23,7 +22,7 @@ ImGuiManager::~ImGuiManager() {
 bool ImGuiManager::Initialize(void* windowHandle, ID3D11Device* device, ID3D11DeviceContext* context) {
     if (initialized) return true;
 
-    std::cout << "[Client] Initializing ImGui..." << std::endl;
+    _logger.Info("[ImGuiManager] Initializing...");
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -48,12 +47,12 @@ bool ImGuiManager::Initialize(void* windowHandle, ID3D11Device* device, ID3D11De
 
     // Setup Platform/Renderer backends
     if (!ImGui_ImplGlfw_InitForOther(glfwWindow, true)) {
-        std::cerr << "Failed to initialize ImGui GLFW backend!" << std::endl;
+        _logger.Error("[ImGuiManager] Failed to initialize ImGui GLFW backend!");
         return false;
     }
 
     if (!ImGui_ImplDX11_Init(device, context)) {
-        std::cerr << "Failed to initialize ImGui DX11 backend!" << std::endl;
+        _logger.Error("[ImGuiManager] Failed to initialize ImGui DX11 backend!");
         ImGui_ImplGlfw_Shutdown();
         return false;
     }
@@ -65,7 +64,7 @@ bool ImGuiManager::Initialize(void* windowHandle, ID3D11Device* device, ID3D11De
 void ImGuiManager::Shutdown() {
     if (!initialized) return;
 
-    std::cout << "Shutting down ImGui..." << std::endl;
+    _logger.Info("[ImGuiManager] Shutting down...");
 
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplGlfw_Shutdown();

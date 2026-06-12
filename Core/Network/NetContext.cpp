@@ -47,7 +47,7 @@ void NetContext::StartStandalone(const ServerConfig& config)
     _localTransportClient->Connect("local", 0);
     // Process the connection event so the player entity exists immediately
     _server->Tick(0.0f);
-    std::cout << "[NetContext] Started Standalone" << std::endl;
+    _server->getLogger().Info("[NetContext] Started Standalone");
 }
 
 void NetContext::StartListenServer(const ServerConfig& config)
@@ -59,7 +59,7 @@ void NetContext::StartListenServer(const ServerConfig& config)
     _server->Initialize(config);
 
     // ENet transport for remote players (server listens on port)
-    _networkTransport = std::make_unique<ENetTransport>();
+    _networkTransport = _server->make_unique_logged<ENetTransport>();
     _networkTransport->Initialize(config.port, config.maxClients);
     _server->AddTransport(_networkTransport.get());
 
@@ -79,7 +79,7 @@ void NetContext::StartListenServer(const ServerConfig& config)
     // Process the connection
     //_server->Tick(0.0f);
 
-    std::cout << "[NetContext] Started Listen Server on port " << config.port << std::endl;
+    _server->getLogger().Info("[NetContext] Started Listen Server on port %u", config.port);
 }
 
 void NetContext::StartDedicatedServer(const ServerConfig& config)
@@ -87,7 +87,7 @@ void NetContext::StartDedicatedServer(const ServerConfig& config)
     _mode = NetMode::DedicatedServer;
 
     _server = std::make_unique<ServerInstance>();
-    _networkTransport = std::make_unique<ENetTransport>();
+    _networkTransport = _server->make_unique_logged<ENetTransport>();
     _networkTransport->Initialize(config.port, config.maxClients);
     _server->AddTransport(_networkTransport.get());
     _server->Initialize(config);
@@ -102,7 +102,7 @@ void NetContext::ConnectToServer(const std::string& address, uint16_t port)
 {
     _mode = NetMode::Client;
 
-    _networkTransport = std::make_unique<ENetTransport>();
+    _networkTransport = _client->make_unique_logged<ENetTransport>();
     _networkTransport->Initialize(0, 1);
 
     // Use the existing _client (created in NetContext constructor) — do NOT replace it.

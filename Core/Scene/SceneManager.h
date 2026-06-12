@@ -12,6 +12,7 @@
 #include <EngineApi.h>
 
 #include "Core/Input/InputManager.h"
+#include "Core/Log/Logger.h"
 
 class IRendererApi;
 class ShaderCollection;
@@ -31,6 +32,9 @@ private:
     ResourceManager* _resourceManager;
     InputManager* _inputManager;
     ClientSession* _clientSession;
+
+    // Scenes are client-side by definition (rendering + input)
+    Log _clientLogger {Log::ClientLog};
 
 
     // Callback when scene is loaded

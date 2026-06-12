@@ -11,6 +11,7 @@
 #include <vector>
 #include <cstdint>
 
+#include "Core/Log/Logger.h"
 #include "Core/Math/Frustum.h"
 #include "Renderer/Shaders/ShaderTypes.h"
 #include <Core/Voxel/ChunkManager.h>
@@ -51,6 +52,8 @@ public:
     [[nodiscard]] TextureArray* GetBlockTextureArray() const { return _blockTextures; }
     [[nodiscard]] BlockRegistry* GetBlockRegistry() const { return _blockRegistry; }
 private:
+    Log _logger {Log::ClientLog};
+
     IRendererApi* _renderer                 = nullptr;
     ShaderCollection* _shaderCollection     = nullptr;
     BlockRegistry* _blockRegistry           = nullptr;

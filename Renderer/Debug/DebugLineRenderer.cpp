@@ -9,7 +9,6 @@
 #include "Renderer/Shaders/ShaderTypes.h"
 #include "Resources/Mesh.h"
 #include "Core/Math/Matrix4x4.h"
-#include <iostream>
 
 DebugLineRenderer::DebugLineRenderer(IRendererApi* renderer)
     : renderer(renderer)
@@ -106,7 +105,7 @@ void DebugLineRenderer::Render(ShaderProgram* shader, void* perFrameBuffer, void
     // Create GPU mesh if needed
     if (!mesh->GetGPUHandle()) {
         if (!renderer->CreateMesh(mesh)) {
-            std::cerr << "DebugLineRenderer: Failed to create GPU mesh!" << std::endl;
+            _logger.Error("[DebugLineRenderer] Failed to create GPU mesh!");
             return;
         }
     }

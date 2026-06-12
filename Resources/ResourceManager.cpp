@@ -10,11 +10,9 @@
 #include "Renderer/RenderApi/IRendererApi.h"
 #include "Renderer/Shaders/ShaderCollection.h"
 
-#include <iostream>
-
 ResourceManager::ResourceManager(IRendererApi* renderer, ShaderCollection* shaderCollection) : _renderer(renderer), _shaderCollection(shaderCollection)
 {
-    _blockRegistry = new BlockRegistry();
+    _blockRegistry = new BlockRegistry(_logger);
 }
 
 ResourceManager::~ResourceManager()
@@ -29,7 +27,7 @@ ModelData ResourceManager::LoadModel(const std::string& filepathModel)
     ModelResult mr = ModelLoader::LoadModel(filepathModel);
 
     if (!mr.mesh) {
-        std::cerr << "ResourceManager: Failed to load model " << filepathModel << std::endl;
+        _logger.Error("[ResourceManager] Failed to load model %s", filepathModel.c_str());
         return {};
     }
 
@@ -69,7 +67,7 @@ ModelData ResourceManager::LoadModel(const std::string& filepathModel, const std
         // TODO: delete old texture if one was extracted from model
         data.texture = tex;
     } else {
-        std::cerr << "ResourceManager: Failed to load texture " << filepathTexture << std::endl;
+        _logger.Error("[ResourceManager] Failed to load texture %s", filepathTexture.c_str());
     }
 
     return data;

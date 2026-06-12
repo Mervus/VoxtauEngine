@@ -9,12 +9,15 @@
 #include <map>
 #include "ShaderProgram.h"
 #include <EngineApi.h>
+#include "Core/Log/Logger.h"
 
 class IRendererApi;
 
 class ShaderCollection
 {
 private:
+    Log _logger {Log::ClientLog};
+
     IRendererApi* renderer;
 
     // PRE-DEFINED COMMON SHADERS

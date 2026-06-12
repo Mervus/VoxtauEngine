@@ -11,7 +11,6 @@
 #include "Resources/Texture.h"
 #include "Resources/TextureData.h"
 #include <cmath>
-#include <iostream>
 
 SkyRenderer::SkyRenderer(IRendererApi* renderer, ShaderCollection* shaderCollection)
     : _renderer(renderer)
@@ -43,7 +42,7 @@ void SkyRenderer::Initialize()
     _skyVertexCB = _renderer->CreateConstantBuffer(sizeof(SkyVertexConstants));
     _skyPropertiesCB = _renderer->CreateConstantBuffer(sizeof(SkyPropertiesConstants));
 
-    std::cout << "SkyRenderer initialized." << std::endl;
+    _logger.Info("[SkyRenderer] initialized.");
 }
 
 void SkyRenderer::Shutdown()
@@ -66,20 +65,20 @@ bool SkyRenderer::LoadSkyboxTexture(const std::string& filepath)
 {
     TextureData texData;
     if (!texData.LoadFromFile(filepath)) {
-        std::cerr << "SkyRenderer: Failed to load skybox texture: " << filepath << std::endl;
+        _logger.Error("[SkyRenderer] Failed to load skybox texture: %s", filepath.c_str());
         return false;
     }
     texData.ConvertToRGBA();
 
     auto* tex = new Texture("skybox");
     if (!_renderer->CreateTexture(tex, texData)) {
-        std::cerr << "SkyRenderer: Failed to create skybox GPU texture!" << std::endl;
+        _logger.Error("[SkyRenderer] Failed to create skybox GPU texture!");
         delete tex;
         return false;
     }
 
     _skyboxTexture = tex;
-    std::cout << "SkyRenderer: Loaded skybox texture: " << filepath << std::endl;
+    _logger.Info("[SkyRenderer] Loaded skybox texture: %s", filepath.c_str());
     return true;
 }
 
@@ -128,7 +127,7 @@ void SkyRenderer::Render(const Math::Matrix4x4& viewProjection,
     ShaderProgram* skyShader = _shaderCollection->GetSkyShader();
     if (!skyShader) {
         // Not loaded yet — shouldn't happen if ShaderCollection::Initialize loads it
-        std::cerr << "SkyRenderer: Sky shader not loaded!" << std::endl;
+        _logger.Error("[SkyRenderer] Sky shader not loaded!");
         return;
     }
 

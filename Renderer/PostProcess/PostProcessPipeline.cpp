@@ -10,7 +10,6 @@
 #include "Resources/MeshGenerator.h"
 #include "Resources/Texture.h"
 #include "Core/Profiler/Profiler.h"
-#include <iostream>
 #include <algorithm>
 #include <cmath>
 
@@ -55,7 +54,7 @@ void PostProcessPipeline::Initialize(int width, int height)
         _renderer->CreateMeshInputLayout(_fullscreenQuad, _blitShader->GetVertexShader());
     }
 
-    std::cout << "PostProcessPipeline initialized (" << width << "x" << height << ")" << std::endl;
+    _logger.Info("[PostProcessPipeline] initialized (%dx%d)", width, height);
 }
 
 void PostProcessPipeline::Shutdown()
@@ -90,7 +89,7 @@ void PostProcessPipeline::CreateRenderTargets()
 {
     _sceneRT = _renderer->CreateRenderTargetWithReadableDepth(_width, _height);
     if (!_sceneRT) {
-        std::cerr << "ERROR: Failed to create scene render target!" << std::endl;
+        _logger.Error("[PostProcessPipeline] Failed to create scene render target!");
         return;
     }
 
@@ -119,7 +118,7 @@ void PostProcessPipeline::Resize(int width, int height)
     }
     _scaledRTs.clear();
 
-    std::cout << "PostProcessPipeline resized to " << width << "x" << height << std::endl;
+    _logger.Info("[PostProcessPipeline] resized to %dx%d", width, height);
 }
 
 RenderTarget* PostProcessPipeline::GetOrCreateScaledRT(int width, int height)
@@ -133,7 +132,7 @@ RenderTarget* PostProcessPipeline::GetOrCreateScaledRT(int width, int height)
     RenderTarget* rt = _renderer->CreateRenderTarget(width, height, false);
     if (rt) {
         _scaledRTs.push_back({width, height, rt});
-        std::cout << "Created scaled RT: " << width << "x" << height << std::endl;
+        _logger.Info("[PostProcessPipeline] Created scaled RT: %dx%d", width, height);
     }
     return rt;
 }
@@ -333,7 +332,7 @@ void PostProcessPipeline::AddEffect(const std::string& name,
 {
     for (const auto& effect : _effects) {
         if (effect.name == name) {
-            std::cerr << "PostProcess effect already exists: " << name << std::endl;
+            _logger.Error("[PostProcessPipeline] effect already exists: %s", name.c_str());
             return;
         }
     }
@@ -345,7 +344,7 @@ void PostProcessPipeline::AddEffect(const std::string& name,
         "pp_" + name, fullVertPath, pixelShaderPath);
 
     if (!shader) {
-        std::cerr << "Failed to load post-process shader: " << pixelShaderPath << std::endl;
+        _logger.Error("[PostProcessPipeline] Failed to load post-process shader: %s", pixelShaderPath.c_str());
         return;
     }
 
@@ -359,8 +358,7 @@ void PostProcessPipeline::AddEffect(const std::string& name,
 
     _effects.push_back(effect);
 
-    std::cout << "PostProcess effect added: " << name
-              << " (scale: " << effect.resolutionScale << ")" << std::endl;
+    _logger.Info("[PostProcessPipeline] effect added: %s (scale: %.2f)", name.c_str(), effect.resolutionScale);
 }
 
 void PostProcessPipeline::RemoveEffect(const std::string& name)

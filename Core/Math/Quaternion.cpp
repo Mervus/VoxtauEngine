@@ -161,8 +161,6 @@ namespace Math {
         result.m[2][1] = 2.0f * (yz - wx);
         result.m[2][2] = 1.0f - 2.0f * (xx + yy);
 
-        //std::cout << "ToMatrix this: " << x << "," << y << "," << z << "," << w << std::endl;
-
         return result;
     }
 

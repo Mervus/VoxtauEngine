@@ -10,6 +10,7 @@
 #include <wrl/client.h>
 #include <vector>
 #include <string>
+#include "Core/Log/Logger.h"
 
 template<typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
@@ -18,6 +19,7 @@ class TextureData;
 
 class DirectX11TextureArray {
 private:
+    Log _logger {Log::ClientLog};
     ComPtr<ID3D11Texture2D> textureArray;
     ComPtr<ID3D11ShaderResourceView> srv;
 

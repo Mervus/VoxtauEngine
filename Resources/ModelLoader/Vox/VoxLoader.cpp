@@ -3,9 +3,11 @@
 //
 
 #include "VoxLoader.h"
+#include "Core/Log/Logger.h"
 #include <fstream>
-#include <iostream>
 #include <cstring>
+
+static Log s_logger {Log::ClientLog};
 
 // MagicaVoxel default palette (used when no RGBA chunk is present)
 static const uint32_t s_DefaultPalette[256] = {
@@ -47,13 +49,13 @@ bool VoxLoader::Load(const std::string& filepath, VoxModel& outModel) {
     // Read entire file into memory
     std::ifstream file(filepath, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
-        std::cerr << "VoxLoader: Failed to open file: " << filepath << std::endl;
+        s_logger.Error("[VoxLoader] Failed to open file: %s", filepath.c_str());
         return false;
     }
 
     size_t fileSize = file.tellg();
     if (fileSize < 8) {
-        std::cerr << "VoxLoader: File too small: " << filepath << std::endl;
+        s_logger.Error("[VoxLoader] File too small: %s", filepath.c_str());
         return false;
     }
 
@@ -67,7 +69,7 @@ bool VoxLoader::Load(const std::string& filepath, VoxModel& outModel) {
 
     // Read header: "VOX " magic
     if (data[0] != 'V' || data[1] != 'O' || data[2] != 'X' || data[3] != ' ') {
-        std::cerr << "VoxLoader: Invalid magic number in: " << filepath << std::endl;
+        s_logger.Error("[VoxLoader] Invalid magic number in: %s", filepath.c_str());
         return false;
     }
     offset = 4;
@@ -75,7 +77,7 @@ bool VoxLoader::Load(const std::string& filepath, VoxModel& outModel) {
     // Version
     uint32_t version = ReadU32(data, offset);
     if (version < 150) {
-        std::cerr << "VoxLoader: Unsupported version " << version << " in: " << filepath << std::endl;
+        s_logger.Error("[VoxLoader] Unsupported version %u in: %s", version, filepath.c_str());
         return false;
     }
 
@@ -83,12 +85,12 @@ bool VoxLoader::Load(const std::string& filepath, VoxModel& outModel) {
     char chunkId[5] = {};
     uint32_t contentSize, childrenSize;
     if (!ReadChunkHeader(data, offset, chunkId, contentSize, childrenSize)) {
-        std::cerr << "VoxLoader: Failed to read MAIN chunk" << std::endl;
+        s_logger.Error("[VoxLoader] Failed to read MAIN chunk");
         return false;
     }
 
     if (std::strcmp(chunkId, "MAIN") != 0) {
-        std::cerr << "VoxLoader: Expected MAIN chunk, got: " << chunkId << std::endl;
+        s_logger.Error("[VoxLoader] Expected MAIN chunk, got: %s", chunkId);
         return false;
     }
 
@@ -157,13 +159,13 @@ bool VoxLoader::Load(const std::string& filepath, VoxModel& outModel) {
     }
 
     if (!foundSize || !foundXyzi) {
-        std::cerr << "VoxLoader: Missing SIZE or XYZI chunk in: " << filepath << std::endl;
+        s_logger.Error("[VoxLoader] Missing SIZE or XYZI chunk in: %s", filepath.c_str());
         return false;
     }
 
-    std::cout << "VoxLoader: Loaded " << filepath
-              << " (" << outModel.sizeX << "x" << outModel.sizeY << "x" << outModel.sizeZ
-              << ", " << outModel.voxels.size() << " voxels)" << std::endl;
+    s_logger.Info("[VoxLoader] Loaded %s (%ux%ux%u, %zu voxels)",
+                  filepath.c_str(), outModel.sizeX, outModel.sizeY, outModel.sizeZ,
+                  outModel.voxels.size());
 
     return true;
 }

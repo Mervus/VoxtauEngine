@@ -5,7 +5,6 @@
 #include "JobSystem.h"
 #include <TaskScheduler.h>
 #include <cassert>
-#include <iostream>
 
 // Internal task type — wraps std::function for enkiTS's inheritance-based API
 class FunctionTask : public enki::ITaskSet {
@@ -48,9 +47,8 @@ void JobSystem::Initialize(uint32_t numThreads) {
 
     _scheduler->Initialize(config);
 
-    std::cout << "[JobSystem] Initialized with "
-              << _scheduler->GetNumTaskThreads() << " worker threads"
-              << std::endl;
+    _logger.Info("[JobSystem] Initialized with %u worker threads",
+                 _scheduler->GetNumTaskThreads());
 }
 
 void JobSystem::Shutdown() {
@@ -60,7 +58,7 @@ void JobSystem::Shutdown() {
     _activeTasks.clear();
     _scheduler.reset();
 
-    std::cout << "[JobSystem] Shutdown complete" << std::endl;
+    _logger.Info("[JobSystem] Shutdown complete");
 }
 
 bool JobSystem::IsInitialized() const {

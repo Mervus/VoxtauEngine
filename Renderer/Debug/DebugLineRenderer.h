@@ -6,6 +6,7 @@
 #define VOXTAU_DEBUGLINERENDERER_H
 
 #include <vector>
+#include "Core/Log/Logger.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Vector4.h"
 #include "Renderer/Vertex.h"
@@ -16,6 +17,8 @@ class Mesh;
 
 class DebugLineRenderer {
 private:
+    Log _logger {Log::ClientLog};
+
     IRendererApi* renderer;
     std::vector<Vertex> vertices;
     Mesh* mesh;
