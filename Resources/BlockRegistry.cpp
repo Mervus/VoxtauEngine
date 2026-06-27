@@ -10,12 +10,12 @@
 #include <nlohmann/json.hpp>
 
 #include <fstream>
-#include <iostream>
 
 using nlohmann::json;
 
-BlockRegistry::BlockRegistry()
-    : basePath("")
+BlockRegistry::BlockRegistry(Log& logger)
+    : _logger(logger)
+    , basePath("")
 {
 }
 
@@ -32,7 +32,7 @@ bool BlockRegistry::LoadFromFile(const std::string& filepath) {
     // Read JSON file
     std::ifstream file(filepath);
     if (!file.is_open()) {
-        std::cerr << "Failed to open blocks.json: " << filepath << std::endl;
+        _logger.Error("[BlockRegistry] Failed to open blocks.json: %s", filepath.c_str());
         return false;
     }
 
@@ -40,7 +40,7 @@ bool BlockRegistry::LoadFromFile(const std::string& filepath) {
     try {
         file >> root;
     } catch (const json::parse_error& e) {
-        std::cerr << "Failed to parse blocks.json: " << e.what() << std::endl;
+        _logger.Error("[BlockRegistry] Failed to parse blocks.json: %s", e.what());
         return false;
     }
 
@@ -140,8 +140,8 @@ bool BlockRegistry::LoadFromFile(const std::string& filepath) {
         }
     }
 
-    std::cout << "BlockRegistry: Loaded " << blockDefinitions.size() << " blocks and "
-              << texturePaths.size() << " textures" << std::endl;
+    _logger.Info("[BlockRegistry] Loaded %zu blocks and %zu textures",
+                 blockDefinitions.size(), texturePaths.size());
 
     return true;
 }
@@ -154,7 +154,7 @@ uint32_t BlockRegistry::GetOrAddTextureIndex(const std::string& textureName) {
     }
 
     // Not found - this shouldn't happen if textures array is properly defined
-    std::cerr << "Warning: Texture '" << textureName << "' not found in textures list!" << std::endl;
+    _logger.Error("[BlockRegistry] Texture '%s' not found in textures list!", textureName.c_str());
     return 0;  // Return first texture as fallback
 }
 
@@ -214,7 +214,7 @@ bool BlockRegistry::CreateTextureArray(IRendererApi* renderer, TextureArray* out
     }
 
     if (texturePaths.empty()) {
-        std::cerr << "No textures to create array from!" << std::endl;
+        _logger.Error("[BlockRegistry] No textures to create array from!");
         return false;
     }
 
@@ -228,7 +228,7 @@ bool BlockRegistry::CreateTextureArray(IRendererApi* renderer, TextureArray* out
     for (size_t i = 0; i < texturePaths.size(); i++) {
         TextureData* texData = new TextureData();
         if (!texData->LoadFromFile(texturePaths[i])) {
-            std::cerr << "Failed to load texture: " << texturePaths[i] << std::endl;
+            _logger.Error("[BlockRegistry] Failed to load texture: %s", texturePaths[i].c_str());
             // Clean up
             for (auto* td : textureDataList) delete td;
             delete texData;
@@ -240,8 +240,8 @@ bool BlockRegistry::CreateTextureArray(IRendererApi* renderer, TextureArray* out
             expectedWidth = texData->GetWidth();
             expectedHeight = texData->GetHeight();
         } else if (texData->GetWidth() != expectedWidth || texData->GetHeight() != expectedHeight) {
-            std::cerr << "Texture " << texturePaths[i] << " has different dimensions! Expected "
-                      << expectedWidth << "x" << expectedHeight << std::endl;
+            _logger.Error("[BlockRegistry] Texture %s has different dimensions! Expected %dx%d",
+                          texturePaths[i].c_str(), expectedWidth, expectedHeight);
             for (auto* td : textureDataList) delete td;
             delete texData;
             return false;

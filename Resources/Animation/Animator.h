@@ -15,6 +15,7 @@
 #pragma once
 
 #include <EngineApi.h>
+#include <Core/Log/Logger.h>
 #include <Core/Math/Matrix4x4.h>
 #include "Skeleton.h"
 #include "AnimationClip.h"
@@ -56,6 +57,8 @@ public:
     float GetNormalizedTime() const; // 0..1
 
 private:
+    Log _logger {Log::ClientLog};
+
     std::shared_ptr<Skeleton> skeleton;
     std::unordered_map<std::string, std::shared_ptr<AnimationClip>> clips;
 

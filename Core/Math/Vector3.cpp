@@ -4,7 +4,6 @@
 
 #include "Vector3.h"
 #include "MathTypes.h"
-#include <iostream>
 #include <string>
 
 namespace Math {
@@ -131,11 +130,6 @@ namespace Math {
 
     float Vector3::DistanceSquared(const Vector3& other) const {
         return (*this - other).LengthSquared();
-    }
-
-    void Vector3::toConsole() const
-    {
-        std::cout << "Vector3(" << x << ", " << y << ", " << z << ")" << std::endl;
     }
 
     // Static functions

@@ -584,7 +584,7 @@ bool DirectX11Renderer::CreateMeshInputLayout(Mesh* mesh, Shader* vertexShader) 
     size_t bytecodeSize = vertexShader->GetBytecodeSize();
 
     if (!bytecode || bytecodeSize == 0) {
-        std::cerr << "Vertex shader has no bytecode for input layout creation!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Vertex shader has no bytecode for input layout creation!");
         return false;
     }
 
@@ -593,7 +593,7 @@ bool DirectX11Renderer::CreateMeshInputLayout(Mesh* mesh, Shader* vertexShader) 
     const VertexLayoutElement* layoutDesc = mesh->GetInputLayoutDesc(layoutCount);
 
     if (!layoutDesc || layoutCount == 0) {
-        std::cerr << "Mesh has no input layout description!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Mesh has no input layout description!");
         return false;
     }
 
@@ -684,7 +684,7 @@ bool DirectX11Renderer::CompileShader(Shader* shader, const std::string& source)
         if (errorBlob) {
             const char* errorMsg = (const char*)errorBlob->GetBufferPointer();
             // Log error message
-            std::cerr << "Shader compilation error: " << errorMsg << std::endl;
+            _logger.Error("[DirectX11Renderer] Shader compilation error: %s", errorMsg);
             errorBlob->Release();
         }
         return false;
@@ -985,7 +985,7 @@ void* DirectX11Renderer::CreateConstantBuffer(size_t size) {
     HRESULT hr = device->CreateBuffer(&bufferDesc, nullptr, &constantBuffer);
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create constant buffer!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create constant buffer!");
         return nullptr;
     }
 
@@ -994,7 +994,7 @@ void* DirectX11Renderer::CreateConstantBuffer(size_t size) {
 
 void DirectX11Renderer::UpdateConstantBuffer(void* buffer, const void* data, size_t size) {
     if (!buffer || !data) {
-        std::cerr << "Invalid constant buffer or data!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Invalid constant buffer or data!");
         return;
     }
 
@@ -1005,7 +1005,7 @@ void DirectX11Renderer::UpdateConstantBuffer(void* buffer, const void* data, siz
     HRESULT hr = context->Map(constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to map constant buffer!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to map constant buffer!");
         return;
     }
 
@@ -1018,7 +1018,7 @@ void DirectX11Renderer::UpdateConstantBuffer(void* buffer, const void* data, siz
 
 void DirectX11Renderer::BindConstantBuffer(int slot, void* buffer, ShaderStage stage) {
     if (!buffer) {
-        std::cerr << "Invalid constant buffer!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Invalid constant buffer!");
         return;
     }
 
@@ -1228,7 +1228,7 @@ void DirectX11Renderer::BindTextureArray(int slot, TextureArray* textureArray)
 void DirectX11Renderer::BindComputeShader(Shader* shader)
 {
     if (!shader || shader->GetType() != ShaderType::Compute) {
-        std::cerr << "Invalid compute shader!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Invalid compute shader!");
         return;
     }
 
@@ -1286,7 +1286,7 @@ void* DirectX11Renderer::CreateTexture2DUAV(int width, int height, int format)
 
     HRESULT hr = device->CreateTexture2D(&texDesc, nullptr, &resource->texture);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create UAV texture!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create UAV texture!");
         delete resource;
         return nullptr;
     }
@@ -1299,7 +1299,7 @@ void* DirectX11Renderer::CreateTexture2DUAV(int width, int height, int format)
 
     hr = device->CreateUnorderedAccessView(resource->texture.Get(), &uavDesc, &resource->uav);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create UAV!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create UAV!");
         delete resource;
         return nullptr;
     }
@@ -1313,7 +1313,7 @@ void* DirectX11Renderer::CreateTexture2DUAV(int width, int height, int format)
 
     hr = device->CreateShaderResourceView(resource->texture.Get(), &srvDesc, &resource->srv);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create SRV for UAV!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create SRV for UAV!");
         delete resource;
         return nullptr;
     }
@@ -1401,7 +1401,7 @@ void* DirectX11Renderer::CreateTexture3D(int width, int height, int depth, const
 
     HRESULT hr = device->CreateTexture3D(&texDesc, pInitData, &resource->texture);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create 3D texture!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create 3D texture!");
         delete resource;
         return nullptr;
     }
@@ -1415,7 +1415,7 @@ void* DirectX11Renderer::CreateTexture3D(int width, int height, int depth, const
 
     hr = device->CreateShaderResourceView(resource->texture.Get(), &srvDesc, &resource->srv);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create SRV for 3D texture!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create SRV for 3D texture!");
         delete resource;
         return nullptr;
     }
@@ -1603,7 +1603,7 @@ void* DirectX11Renderer::CreateOcclusionQuery()
     ID3D11Query* query = nullptr;
     HRESULT hr = device->CreateQuery(&queryDesc, &query);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create occlusion query!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create occlusion query!");
         return nullptr;
     }
 
@@ -1703,7 +1703,7 @@ void* DirectX11Renderer::CreateStructuredBuffer(size_t elemSize, size_t count, b
     } else if (!cpuWrite && !gpuWrite) {
         // Immutable - no writes after creation (requires initial data)
         if (!initialData) {
-            std::cerr << "Failed to create structured buffer: immutable buffer requires initialData!" << std::endl;
+            _logger.Error("[DirectX11Renderer] Failed to create structured buffer: immutable buffer requires initialData!");
             delete resource;
             return nullptr;
         }
@@ -1722,7 +1722,7 @@ void* DirectX11Renderer::CreateStructuredBuffer(size_t elemSize, size_t count, b
 
     HRESULT hr = device->CreateBuffer(&bufferDesc, initialData ? &initData : nullptr, &resource->buffer);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create structured buffer! HRESULT: " << std::hex << hr << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create structured buffer! HRESULT: 0x%08lx", static_cast<unsigned long>(hr));
         delete resource;
         return nullptr;
     }
@@ -1748,7 +1748,7 @@ void* DirectX11Renderer::CreateStructuredBufferSRV(void* buffer)
 
     HRESULT hr = device->CreateShaderResourceView(resource->buffer.Get(), &srvDesc, &resource->srv);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create structured buffer SRV!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create structured buffer SRV!");
         return nullptr;
     }
 
@@ -1775,7 +1775,7 @@ void* DirectX11Renderer::CreateStructuredBufferUAV(void* buffer, bool appendCons
 
     HRESULT hr = device->CreateUnorderedAccessView(resource->buffer.Get(), &uavDesc, &resource->uav);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create structured buffer UAV!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create structured buffer UAV!");
         return nullptr;
     }
 
@@ -1791,7 +1791,7 @@ void DirectX11Renderer::UpdateStructuredBuffer(void* buffer, const void* data, s
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     HRESULT hr = context->Map(resource->buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     if (FAILED(hr)) {
-        std::cerr << "Failed to map structured buffer!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to map structured buffer!");
         return;
     }
 
@@ -1858,7 +1858,7 @@ void* DirectX11Renderer::CreateStagingBuffer(size_t size)
     ID3D11Buffer* stagingBuffer = nullptr;
     HRESULT hr = device->CreateBuffer(&bufferDesc, nullptr, &stagingBuffer);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create staging buffer!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create staging buffer!");
         return nullptr;
     }
 
@@ -1904,7 +1904,7 @@ void* DirectX11Renderer::MapStagingBuffer(void* staging)
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     HRESULT hr = context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mappedResource);
     if (FAILED(hr)) {
-        std::cerr << "Failed to map staging buffer!" << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to map staging buffer!");
         return nullptr;
     }
 
@@ -1959,7 +1959,7 @@ void* DirectX11Renderer::CreateIndexBuffer(const uint32_t* data, size_t indexCou
     ID3D11Buffer* buffer = nullptr;
     HRESULT hr = device->CreateBuffer(&desc, &initData, &buffer);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create index buffer. HRESULT: " << std::hex << hr << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create index buffer. HRESULT: 0x%08lx", static_cast<unsigned long>(hr));
         return nullptr;
     }
 
@@ -2016,7 +2016,7 @@ void* DirectX11Renderer::CreateByteAddressBuffer(size_t sizeBytes, bool cpuWrite
     HRESULT hr = device->CreateBuffer(&desc, nullptr, &buffer);
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create ByteAddressBuffer. HRESULT: " << std::hex << hr << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create ByteAddressBuffer. HRESULT: 0x%08lx", static_cast<unsigned long>(hr));
         return nullptr;
     }
 
@@ -2046,7 +2046,7 @@ void* DirectX11Renderer::CreateByteAddressBufferSRV(void* buffer)
     HRESULT hr = device->CreateShaderResourceView(d3dBuffer, &srvDesc, &srv);
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create ByteAddressBuffer SRV. HRESULT: " << std::hex << hr << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create ByteAddressBuffer SRV. HRESULT: 0x%08lx", static_cast<unsigned long>(hr));
         return nullptr;
     }
 
@@ -2077,7 +2077,7 @@ void* DirectX11Renderer::CreateByteAddressBufferUAV(void* buffer)
     HRESULT hr = device->CreateUnorderedAccessView(d3dBuffer, &uavDesc, &uav);
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create ByteAddressBuffer UAV. HRESULT: " << std::hex << hr << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create ByteAddressBuffer UAV. HRESULT: 0x%08lx", static_cast<unsigned long>(hr));
         return nullptr;
     }
 
@@ -2113,7 +2113,7 @@ void* DirectX11Renderer::CreateIndirectArgsBuffer(size_t sizeBytes, bool gpuWrit
     HRESULT hr = device->CreateBuffer(&desc, &initData, &buffer);
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create IndirectArgsBuffer. HRESULT: " << std::hex << hr << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create IndirectArgsBuffer. HRESULT: 0x%08lx", static_cast<unsigned long>(hr));
         return nullptr;
     }
 
@@ -2144,7 +2144,7 @@ void* DirectX11Renderer::CreateIndirectArgsBufferUAV(void* buffer)
     HRESULT hr = device->CreateUnorderedAccessView(d3dBuffer, &uavDesc, &uav);
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create IndirectArgsBuffer UAV. HRESULT: " << std::hex << hr << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create IndirectArgsBuffer UAV. HRESULT: 0x%08lx", static_cast<unsigned long>(hr));
         return nullptr;
     }
 
@@ -2172,7 +2172,7 @@ void* DirectX11Renderer::CreateRawIndirectArgsBuffer(size_t sizeBytes)
     HRESULT hr = device->CreateBuffer(&desc, &initData, &buffer);
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create RawIndirectArgsBuffer. HRESULT: " << std::hex << hr << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create RawIndirectArgsBuffer. HRESULT: 0x%08lx", static_cast<unsigned long>(hr));
         return nullptr;
     }
 
@@ -2201,7 +2201,7 @@ void* DirectX11Renderer::CreateRawIndirectArgsBufferUAV(void* buffer)
     HRESULT hr = device->CreateUnorderedAccessView(d3dBuffer, &uavDesc, &uav);
 
     if (FAILED(hr)) {
-        std::cerr << "Failed to create RawIndirectArgsBuffer UAV. HRESULT: " << std::hex << hr << std::endl;
+        _logger.Error("[DirectX11Renderer] Failed to create RawIndirectArgsBuffer UAV. HRESULT: 0x%08lx", static_cast<unsigned long>(hr));
         return nullptr;
     }
 

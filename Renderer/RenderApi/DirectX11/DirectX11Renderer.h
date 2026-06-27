@@ -13,6 +13,7 @@
 #include <map>
 #include <vector>
 
+#include "Core/Log/Logger.h"
 #include "DirectX11Mesh.h"
 #include "DirectX11Texture.h"
 #include "DirectX11TextureArray.h"
@@ -40,6 +41,8 @@ struct GpuBuffer {
 class DirectX11Renderer : public IRendererApi
 {
     private:
+    Log _logger {Log::ClientLog};
+
     // CORE D3D11 OBJECTS
     ComPtr<IDXGIFactory4> _dxgiFactory;
     ComPtr<ID3D11Device> device;

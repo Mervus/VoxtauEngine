@@ -62,8 +62,6 @@ namespace Math {
         float Distance(const Vector3& other) const;
         float DistanceSquared(const Vector3& other) const;
 
-        void toConsole() const;
-
         // Static functions
         static float Dot(const Vector3& a, const Vector3& b);
         static Vector3 Cross(const Vector3& a, const Vector3& b);
@@ -84,6 +82,12 @@ namespace Math {
     inline std::ostream& operator<< (std::ostream& outs, const Math::Vector3& obj ) {
         //"(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")"
         return outs << "(" + std::to_string(obj.x) + ", " + std::to_string(obj.y) + ", " + std::to_string(obj.z) + ")";
+    }
+
+    inline std::string Str(const Vector3& v) {
+        char b[64];
+        std::snprintf(b, sizeof(b), "%.2f, %.2f, %.2f", v.x, v.y, v.z);
+        return b;
     }
 }
 

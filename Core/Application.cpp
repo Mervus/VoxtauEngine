@@ -39,13 +39,13 @@ Application::~Application()
 }
 
 bool Application::Initialize() {
-    std::cout << "[Client] Initializing Application..." << std::endl;
+    _logger.Info("[Application] Initializing...");
 
     JobSystem::Instance().Initialize();
 
     // Create GLFW window FIRST
     if (!InitializeGLFW()) {
-        std::cerr << "[Client] Failed to initialize GLFW!" << std::endl;
+        _logger.Error("[Application] Failed to initialize GLFW!");
         return false;
     }
 
@@ -57,7 +57,7 @@ bool Application::Initialize() {
     // INITIALIZE RENDERER
     _renderer = std::make_unique<DirectX11Renderer>();
     if (!_renderer->Initialize(_windowHandle, _width, _height)) {
-        std::cerr << "[Client] Failed to initialize renderer!" << std::endl;
+        _logger.Error("[Application] Failed to initialize renderer!");
         return false;
     }
 
@@ -85,7 +85,7 @@ bool Application::Initialize() {
 
     _imguiManager = std::make_unique<ImGuiManager>();
     if (!_imguiManager->Initialize(_window, _renderer->GetDevice(), _renderer->GetContext())) {
-        std::cerr << "[Client] Failed to initialize ImGui!" << std::endl;
+        _logger.Error("[Application] Failed to initialize ImGui!");
         return false;
     }
 
@@ -101,7 +101,7 @@ bool Application::Initialize() {
     });
 
 
-    std::cout << "[Client] Application initialized successfully!" << std::endl;
+    _logger.Info("[Application] initialized successfully!");
     _isRunning = true;
     return true;
 }
@@ -203,7 +203,7 @@ void Application::Render()
 }
 
 void Application::Shutdown() {
-    std::cout << "Shutting down Application..." << std::endl;
+    _logger.Info("[Application] Shutting down...");
 
 
     JobSystem::Instance().Shutdown();
@@ -222,7 +222,7 @@ void Application::Shutdown() {
 
     Profiler::Instance().ExportJson();
 
-    std::cout << "[Client] Application shutdown complete." << std::endl;
+    _logger.Info("[Application] shutdown complete.");
 }
 
 void Application::HandleResize(GLFWwindow* window, int32_t width, int32_t height)
@@ -279,7 +279,7 @@ bool Application::InitializeGLFW()
 {
     if (!glfwInit())
     {
-        std::cout << "GLFW: Unable to initialize\n";
+        _logger.Error("[Application] GLFW: Unable to initialize");
         return false;
     }
 
@@ -293,7 +293,7 @@ bool Application::InitializeGLFW()
     _window = glfwCreateWindow(_width, _height, _title.data(), nullptr, nullptr);
     if (_window == nullptr)
     {
-        std::cout << "GLFW: Unable to create window\n";
+        _logger.Error("[Application] GLFW: Unable to create window");
         return false;
     }
 

@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstdint>
+#include "Core/Log/Logger.h"
 #include "Core/Math/MathTypes.h"
 #include "Renderer/Shaders/ShaderTypes.h"
 
@@ -41,6 +42,8 @@ public:
     Math::Vector3 GetSunDirection() const;
 
 private:
+    Log _logger {Log::ClientLog};
+
     IRendererApi* _renderer;
     ShaderCollection* _shaderCollection;
 

@@ -3,7 +3,6 @@
 //
 
 #include "SceneManager.h"
-#include <iostream>
 
 #include "Core/Profiler/Profiler.h"
 
@@ -34,12 +33,12 @@ void SceneManager::AddScene(const std::string& name, Scene* scene) {
     if (!scene) return;
 
     // Set system references
-    scene->SetSystems(_renderer, _shaderCollection, _resourceManager, _inputManager, _clientSession);
+    scene->SetSystems(_renderer, _shaderCollection, _resourceManager, _inputManager, _clientSession, &_clientLogger);
 
     // Add to map
     _scenes[name] = scene;
 
-    std::cout << "Scene added: " << name << std::endl;
+    _clientLogger.Info("[SceneManager] Scene added: %s", name.c_str());
 }
 
 void SceneManager::RemoveScene(const std::string& name) {
@@ -47,14 +46,14 @@ void SceneManager::RemoveScene(const std::string& name) {
     if (it != _scenes.end()) {
         // Don't delete if it's the current scene
         if (it->second == _currentScene) {
-            std::cerr << "Cannot remove active scene: " << name << std::endl;
+            _clientLogger.Error("[SceneManager] Cannot remove active scene: %s", name.c_str());
             return;
         }
 
         delete it->second;
         _scenes.erase(it);
 
-        std::cout << "Scene removed: " << name << std::endl;
+        _clientLogger.Info("[SceneManager] Scene removed: %s", name.c_str());
     }
 }
 
@@ -70,7 +69,7 @@ void SceneManager::LoadScene(const std::string& name) {
     Scene* scene = GetScene(name);
 
     if (!scene) {
-        std::cerr << "Scene not found: " << name << std::endl;
+        _clientLogger.Error("[SceneManager] Scene not found: %s", name.c_str());
         return;
     }
 
@@ -79,7 +78,7 @@ void SceneManager::LoadScene(const std::string& name) {
         return;
     }
 
-    std::cout << "Loading scene: " << name << std::endl;
+    _clientLogger.Info("[SceneManager] Loading scene: %s", name.c_str());
 
     // Deactivate current scene
     if (_currentScene) {
@@ -100,7 +99,7 @@ void SceneManager::LoadScene(const std::string& name) {
         onSceneLoaded(_currentScene);
     }
 
-    std::cout << "Scene loaded: " << name << std::endl;
+    _clientLogger.Info("[SceneManager] Scene loaded: %s", name.c_str());
 }
 
 void SceneManager::LoadSceneAsync(const std::string& name) {

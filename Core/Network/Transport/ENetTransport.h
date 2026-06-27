@@ -7,6 +7,7 @@
 #pragma once
 
 #include "INetworkTransport.h"
+#include "Core/Log/Logger.h"
 #include <unordered_map>
 #include <enet/enet.h>
 
@@ -23,7 +24,7 @@ class ENetTransport : public INetworkTransport {
 public:
     static constexpr uint8_t CHANNEL_COUNT = 3;
 
-    ENetTransport();
+    explicit ENetTransport(Log& logger);
     ~ENetTransport() override;
 
     // Lifecycle
@@ -50,6 +51,7 @@ public:
 
     void Flush() override;
 private:
+    Log& _logger;
     ENetHost* _host = nullptr;
     bool _isServer = false;
 

@@ -3,7 +3,6 @@
 //
 
 #include "DirectX11Texture.h"
-#include <iostream>
 
 DirectX11Texture::DirectX11Texture()
     : width(0)
@@ -58,7 +57,7 @@ bool DirectX11Texture::Create(
     // (we'll upload mip 0 separately then generate the rest)
     HRESULT hr = device->CreateTexture2D(&texDesc, nullptr, &texture);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create DirectX11 texture!" << std::endl;
+        _logger.Error("[DirectX11Texture] Failed to create texture!");
         return false;
     }
 
@@ -71,7 +70,7 @@ bool DirectX11Texture::Create(
 
     hr = device->CreateShaderResourceView(texture.Get(), &srvDesc, &srv);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create shader resource view!" << std::endl;
+        _logger.Error("[DirectX11Texture] Failed to create shader resource view!");
         return false;
     }
 
@@ -94,7 +93,7 @@ bool DirectX11Texture::Create(
 
     // Create default sampler
     if (!CreateSampler(device)) {
-        std::cerr << "Failed to create sampler state!" << std::endl;
+        _logger.Error("[DirectX11Texture] Failed to create sampler state!");
         return false;
     }
 
@@ -129,7 +128,7 @@ bool DirectX11Texture::CreateRenderTarget(
     // Create texture
     HRESULT hr = device->CreateTexture2D(&texDesc, nullptr, &texture);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create render target texture!" << std::endl;
+        _logger.Error("[DirectX11Texture] Failed to create render target texture!");
         return false;
     }
 
@@ -141,7 +140,7 @@ bool DirectX11Texture::CreateRenderTarget(
 
     hr = device->CreateRenderTargetView(texture.Get(), &rtvDesc, &rtv);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create render target view!" << std::endl;
+        _logger.Error("[DirectX11Texture] Failed to create render target view!");
         return false;
     }
 
@@ -154,13 +153,13 @@ bool DirectX11Texture::CreateRenderTarget(
 
     hr = device->CreateShaderResourceView(texture.Get(), &srvDesc, &srv);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create SRV for render target!" << std::endl;
+        _logger.Error("[DirectX11Texture] Failed to create SRV for render target!");
         return false;
     }
 
     // Create sampler
     if (!CreateSampler(device)) {
-        std::cerr << "Failed to create sampler state!" << std::endl;
+        _logger.Error("[DirectX11Texture] Failed to create sampler state!");
         return false;
     }
 
@@ -193,7 +192,7 @@ bool DirectX11Texture::CreateDepthStencil(
 
     HRESULT hr = device->CreateTexture2D(&texDesc, nullptr, &texture);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create depth stencil texture!" << std::endl;
+        _logger.Error("[DirectX11Texture] Failed to create depth stencil texture!");
         return false;
     }
 
@@ -206,7 +205,7 @@ bool DirectX11Texture::CreateDepthStencil(
 
     hr = device->CreateShaderResourceView(texture.Get(), &srvDesc, &srv);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create SRV for depth texture!" << std::endl;
+        _logger.Error("[DirectX11Texture] Failed to create SRV for depth texture!");
         return false;
     }
 

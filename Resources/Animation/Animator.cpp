@@ -3,7 +3,6 @@
 //
 
 #include "Animator.h"
-#include <iostream>
 
 Animator::Animator() {
     // Pre-allocate bone matrices to identity
@@ -25,7 +24,7 @@ void Animator::AddClip(const std::string& name, std::shared_ptr<AnimationClip> c
 void Animator::Play(const std::string& clipName, bool loop) {
     auto it = clips.find(clipName);
     if (it == clips.end()) {
-        std::cerr << "Animator: Clip not found: " << clipName << std::endl;
+        _logger.Error("[Animator] Clip not found: %s", clipName.c_str());
         return;
     }
 

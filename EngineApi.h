@@ -15,3 +15,13 @@ constexpr float HALF_PI = 1.57079632679489661923f;
 constexpr float DEG_TO_RAD = PI / 180.0f;
 constexpr float RAD_TO_DEG = 180.0f / PI;
 constexpr float EPSILON = 1e-6f;
+
+template<typename Derived>
+struct LoggerMixin {
+    template<typename T, typename... Args>
+    std::unique_ptr<T> make_unique_logged(Args&&... args) {
+        return std::make_unique<T>(
+            static_cast<Derived*>(this)->getLogger(),
+            std::forward<Args>(args)...);
+    }
+};

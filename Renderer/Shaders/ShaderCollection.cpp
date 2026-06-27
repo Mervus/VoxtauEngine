@@ -6,7 +6,6 @@
 #include <Renderer/RenderApi/IRendererApi.h>
 #include <fstream>
 #include <sstream>
-#include <iostream>
 #include <vector>
 #include <d3dcompiler.h>
 
@@ -32,7 +31,7 @@ ShaderCollection::~ShaderCollection() {
 }
 
 void ShaderCollection::Initialize() {
-    std::cout << "[Client] Initializing ShaderCollection..." << std::endl;
+    _logger.Info("[ShaderCollection] Initializing...");
 
     // LOAD COMMON SHADERS
 
@@ -83,21 +82,21 @@ ShaderProgram* ShaderCollection::LoadShader(
     // Check if already loaded in custom shaders
     auto it = customShaders.find(name);
     if (it != customShaders.end()) {
-        std::cerr << "[Client] Shader already loaded, returning existing." << std::endl;
+        _logger.Error("[ShaderCollection] Shader already loaded, returning existing.");
         return it->second;
     }
 
     // Load and compile vertex shader
     Shader* vs = LoadShaderFromFile(vertexPath, ShaderType::Vertex);
     if (!vs) {
-        std::cerr << "[Client] ERROR: Failed to load vertex shader: " << vertexPath << std::endl;
+        _logger.Error("[ShaderCollection] Failed to load vertex shader: %s", vertexPath.c_str());
         return nullptr;
     }
 
     // Load and compile pixel shader
     Shader* ps = LoadShaderFromFile(pixelPath, ShaderType::Pixel);
     if (!ps) {
-        std::cerr << "[Client] ERROR: Failed to load pixel shader: " << pixelPath << std::endl;
+        _logger.Error("[ShaderCollection] Failed to load pixel shader: %s", pixelPath.c_str());
         delete vs;
         return nullptr;
     }
@@ -107,7 +106,7 @@ ShaderProgram* ShaderCollection::LoadShader(
     if (!geometryPath.empty()) {
         gs = LoadShaderFromFile(geometryPath, ShaderType::Geometry);
         if (!gs) {
-            std::cerr << "[Client] WARNING: Failed to load geometry shader: " << geometryPath << std::endl;
+            _logger.Error("[ShaderCollection] Failed to load geometry shader: %s", geometryPath.c_str());
         }
     }
 
@@ -121,7 +120,7 @@ ShaderProgram* ShaderCollection::LoadShader(
 
     // Validate
     if (!program->IsValid()) {
-        std::cerr << "[Client] ERROR: Shader program is invalid!" << std::endl;
+        _logger.Error("[ShaderCollection] Shader program is invalid!");
         delete program;
         return nullptr;
     }
@@ -139,13 +138,13 @@ Shader* ShaderCollection::LoadComputeShader(
     // Check if already loaded
     auto it = computeShaders.find(name);
     if (it != computeShaders.end()) {
-        std::cerr << "[Client] Compute shader already loaded, returning existing." << std::endl;
+        _logger.Error("[ShaderCollection] Compute shader already loaded, returning existing.");
         return it->second;
     }
 
     Shader* cs = LoadShaderFromFile(computePath, ShaderType::Compute);
     if (!cs) {
-        std::cerr << "[Client] ERROR: Failed to load compute shader: " << computePath << std::endl;
+        _logger.Error("[ShaderCollection] Failed to load compute shader: %s", computePath.c_str());
         return nullptr;
     }
 
@@ -161,7 +160,7 @@ Shader* ShaderCollection::GetComputeShader(const std::string& name) {
         return it->second;
     }
 
-    std::cerr << "[Client] WARNING: Compute shader not found: " << name << std::endl;
+    _logger.Error("[ShaderCollection] Compute shader not found: %s", name.c_str());
     return nullptr;
 }
 
@@ -172,7 +171,7 @@ Shader* ShaderCollection::LoadShaderFromFile(
     // Read shader source from file
     std::ifstream file(filepath);
     if (!file.is_open()) {
-        std::cerr << "    ERROR: Cannot open shader file: " << filepath << std::endl;
+        _logger.Error("[ShaderCollection] Cannot open shader file: %s", filepath.c_str());
         return nullptr;
     }
 
@@ -182,7 +181,7 @@ Shader* ShaderCollection::LoadShaderFromFile(
     file.close();
 
     if (shaderSource.empty()) {
-        std::cerr << "    ERROR: Shader file is empty: " << filepath << std::endl;
+        _logger.Error("[ShaderCollection] Shader file is empty: %s", filepath.c_str());
         return nullptr;
     }
 
@@ -191,7 +190,7 @@ Shader* ShaderCollection::LoadShaderFromFile(
 
     // Compile shader using renderer (platform-specific)
     if (!renderer->CompileShader(shader, shaderSource)) {
-        std::cerr << "    ERROR: Failed to compile shader: " << filepath << std::endl;
+        _logger.Error("[ShaderCollection] Failed to compile shader: %s", filepath.c_str());
         delete shader;
         return nullptr;
     }
@@ -258,7 +257,7 @@ ShaderProgram* ShaderCollection::GetShader(const std::string& name) {
         return it->second;
     }
 
-    std::cerr << "WARNING: Shader not found: " << name << std::endl;
+    _logger.Error("[ShaderCollection] Shader not found: %s", name.c_str());
     return nullptr;
 }
 
@@ -268,7 +267,7 @@ void ShaderCollection::ReloadShader(const std::string& name) {
     // Find shader in custom shaders
     auto it = customShaders.find(name);
     if (it == customShaders.end()) {
-        std::cerr << "WARNING: Cannot reload shader, not found: " << name << std::endl;
+        _logger.Error("[ShaderCollection] Cannot reload shader, not found: %s", name.c_str());
         return;
     }
 
@@ -287,11 +286,11 @@ void ShaderCollection::ReloadShader(const std::string& name) {
     // Reload
     LoadShader(name, vertPath, pixelPath, geomPath);
 
-    std::cout << "Reloaded shader: " << name << std::endl;
+    _logger.Info("[ShaderCollection] Reloaded shader: %s", name.c_str());
 }
 
 void ShaderCollection::ReloadAll() {
-    std::cout << "Reloading all shaders..." << std::endl;
+    _logger.Info("[ShaderCollection] Reloading all shaders...");
 
     // Store all shader names
     std::vector<std::string> shaderNames;
@@ -304,12 +303,12 @@ void ShaderCollection::ReloadAll() {
         ReloadShader(name);
     }
 
-    std::cout << "All shaders reloaded!" << std::endl;
+    _logger.Info("[ShaderCollection] All shaders reloaded!");
 }
 
 // CLEANUP
 void ShaderCollection::UnloadAll() {
-    std::cout << "Unloading all shaders..." << std::endl;
+    _logger.Info("[ShaderCollection] Unloading all shaders...");
 
     // Delete common shaders (they're also in customShaders map)
     voxelShader = nullptr;
@@ -335,6 +334,6 @@ void ShaderCollection::UnloadAll() {
     }
     computeShaders.clear();
 
-    std::cout << "All shaders unloaded." << std::endl;
+    _logger.Info("[ShaderCollection] All shaders unloaded.");
 }
 

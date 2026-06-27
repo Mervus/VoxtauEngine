@@ -14,6 +14,7 @@
 #include <set>
 
 #include "Core/Entity/EntityID.h"
+#include "Core/Log/Logger.h"
 #include "Core/Math/Vector3.h"
 
 class IWorldGenerator;
@@ -39,9 +40,13 @@ struct ServerConfig {
     int verticalChunks = 6;
 };
 
-class ServerInstance
+class ServerInstance : public LoggerMixin<ServerInstance>
 {
-    public:
+    Log _serverLogger {Log::ServerLog};
+public:
+    Log& getLogger() { return _serverLogger; }
+
+public:
     ServerInstance();
     ~ServerInstance();
 

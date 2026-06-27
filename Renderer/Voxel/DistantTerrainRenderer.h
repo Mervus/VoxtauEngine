@@ -6,6 +6,7 @@
 #define VOXTAU_DISTANTTERRAINRENDERER_H
 #pragma once
 
+#include "Core/Log/Logger.h"
 #include "Core/Math/Vector3.h"
 
 class IRendererApi;
@@ -40,6 +41,8 @@ public:
     bool IsBuilt() const { return _mesh != nullptr; }
 
 private:
+    Log _logger {Log::ClientLog};
+
     IRendererApi* _renderer;
     ShaderCollection* _shaderCollection;
     ShaderProgram* _shader = nullptr;

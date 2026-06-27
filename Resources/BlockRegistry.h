@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <cstdint>
 
+#include "Core/Log/Logger.h"
+
 class TextureArray;
 class TextureData;
 class IRendererApi;
@@ -49,7 +51,7 @@ struct BlockDefinition {
 
 class BlockRegistry {
 public:
-    BlockRegistry();
+    explicit BlockRegistry(Log& logger);
     ~BlockRegistry();
 
     // Load block definitions from JSON file
@@ -79,6 +81,8 @@ public:
     [[nodiscard]] size_t GetBlockCount() const;
 
 private:
+    Log& _logger;
+
     std::vector<std::string> texturePaths;
     std::unordered_map<std::string, uint32_t> textureNameToIndex;
     std::unordered_map<uint8_t, BlockDefinition> blockDefinitions;

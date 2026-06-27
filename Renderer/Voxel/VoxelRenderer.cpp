@@ -4,8 +4,6 @@
 
 #include "VoxelRenderer.h"
 
-#include <iostream>
-
 #include "Core/Voxel/Chunk.h"
 #include "Core/Math/MathTypes.h"
 #include "Core/Profiler/Profiler.h"
@@ -27,7 +25,7 @@ VoxelRenderer::VoxelRenderer(IRendererApi* renderer, ShaderCollection* shaderCol
     : _renderer(renderer)
     , _shaderCollection(shaderCollection)
 {
-    _blockRegistry = new BlockRegistry();
+    _blockRegistry = new BlockRegistry(_logger);
     _blockRegistry->LoadFromFile("Assets/Data/blocks.json");
 
     _blockTextures = new TextureArray("BlockTextures");
@@ -48,10 +46,10 @@ void VoxelRenderer::Initialize(bool useGPUMeshing)
     }
 
     if (!_blockRegistry->CreateTextureArray(_renderer, _blockTextures)) {
-        std::cerr << "VoxelRenderer:51 Failed to create block texture array!" << std::endl;
+        _logger.Error("[VoxelRenderer] Failed to create block texture array!");
     }
 
-    std::cout << "VoxelRenderer initialized. GPU meshing: " << (_useGPUMeshing ? "ON" : "OFF") << std::endl;
+    _logger.Info("[VoxelRenderer] initialized. GPU meshing: %s", _useGPUMeshing ? "ON" : "OFF");
 }
 
 void VoxelRenderer::Shutdown()
@@ -148,7 +146,7 @@ void VoxelRenderer::ProcessMeshQueue(uint32_t maxPerFrame)
 
         // Validate GPU buffers before use
         if (!data.voxelBuffer || !data.vertexBuffer || !data.counterBuffer) {
-            std::cerr << "ERROR: Chunk GPU buffers are null, skipping" << std::endl;
+            _logger.Error("[VoxelRenderer] Chunk GPU buffers are null, skipping");
             data.isDirty = false;
             continue;
         }
@@ -165,9 +163,8 @@ void VoxelRenderer::ProcessMeshQueue(uint32_t maxPerFrame)
         // Read back face count for culling
         data.faceCount = ReadBackFaceCount(data);
         if (data.faceCount > Chunk::MAX_FACES_PER_CHUNK) {
-            std::cerr << "WARNING: Chunk face count " << data.faceCount
-                      << " exceeds MAX " << Chunk::MAX_FACES_PER_CHUNK
-                      << ", clamping" << std::endl;
+            _logger.Error("[VoxelRenderer] Chunk face count %u exceeds MAX %u, clamping",
+                          data.faceCount, Chunk::MAX_FACES_PER_CHUNK);
             data.faceCount = Chunk::MAX_FACES_PER_CHUNK;
         }
         // faceCount==0 chunks are skipped in the render loop naturally.
@@ -249,7 +246,7 @@ void VoxelRenderer::RenderChunksCPU(void* perFrameBuffer, void* perObjectBuffer,
 
     ShaderProgram* voxelShader = _shaderCollection->GetVoxelShader();
     if (!voxelShader) {
-        std::cerr << "ERROR: Voxel shader is null!" << std::endl;
+        _logger.Error("[VoxelRenderer] Voxel shader is null!");
         return;
     }
 
@@ -280,7 +277,7 @@ void VoxelRenderer::RenderChunksCPU(void* perFrameBuffer, void* perObjectBuffer,
 
 void VoxelRenderer::InitializeComputeResources()
 {
-    std::cout << "Initializing GPU compute resources..." << std::endl;
+    _logger.Info("[VoxelRenderer] Initializing GPU compute resources...");
 
     // Generate shared quad index buffer
     auto indices = GenerateQuadIndices(Chunk::MAX_FACES_PER_CHUNK);
@@ -290,7 +287,7 @@ void VoxelRenderer::InitializeComputeResources()
         indices.size()
     );
 
-    std::cout << "Quad index buffer created: " << indices.size() << " indices" << std::endl;
+    _logger.Info("[VoxelRenderer] Quad index buffer created: %zu indices", indices.size());
 
     // Build block texture lookup table
     BuildBlockTextureMap();
@@ -311,7 +308,7 @@ void VoxelRenderer::InitializeComputeResources()
     // Staging buffer for vertex count readback (4 bytes)
     _counterStagingBuffer = _renderer->CreateStagingBuffer(4);
 
-    std::cout << "Frustum culling resources created (max " << MAX_CHUNKS << " chunks)" << std::endl;
+    _logger.Info("[VoxelRenderer] Frustum culling resources created (max %u chunks)", MAX_CHUNKS);
 }
 
 void VoxelRenderer::ShutdownComputeResources()
@@ -396,7 +393,7 @@ void VoxelRenderer::CreateChunkGpuBuffers(ChunkGpuData& data)
         !data.vertexBuffer || !data.vertexSRV || !data.vertexUAV ||
         !data.counterBuffer || !data.counterUAV ||
         !data.drawArgsBuffer || !data.drawArgsUAV) {
-        std::cerr << "ERROR: Failed to create chunk GPU buffers!" << std::endl;
+        _logger.Error("[VoxelRenderer] Failed to create chunk GPU buffers!");
         DestroyChunkGpuBuffers(data);
         return;
     }
@@ -461,7 +458,7 @@ void VoxelRenderer::DispatchBuildDrawArgs(ChunkGpuData& data)
 {
     Shader* argsShader = _shaderCollection->GetComputeShader("BuildDrawArgs");
     if (!argsShader) {
-        std::cerr << "ERROR: BuildDrawArgs compute shader not found!" << std::endl;
+        _logger.Error("[VoxelRenderer] BuildDrawArgs compute shader not found!");
         return;
     }
 
@@ -509,8 +506,8 @@ void VoxelRenderer::UpdateChunkCullData()
     if (!_cullDataDirty) return;
 
     if (_chunkGpuData.size() > MAX_CHUNKS) {
-        std::cerr << "WARNING: Chunk count (" << _chunkGpuData.size()
-                  << ") exceeds MAX_CHUNKS (" << MAX_CHUNKS << "). Culling capped." << std::endl;
+        _logger.Error("[VoxelRenderer] Chunk count (%zu) exceeds MAX_CHUNKS (%u). Culling capped.",
+                      _chunkGpuData.size(), MAX_CHUNKS);
     }
 
     std::vector<ChunkCullData> cullData;
@@ -577,7 +574,7 @@ void VoxelRenderer::DispatchFrustumCull(const Math::Matrix4x4& viewProjection)
     // Bind frustum cull compute shader
     Shader* cullShader = _shaderCollection->GetComputeShader("FrustumCull");
     if (!cullShader) {
-        std::cerr << "ERROR: FrustumCull shader not found!" << std::endl;
+        _logger.Error("[VoxelRenderer] FrustumCull shader not found!");
         return;
     }
 
@@ -622,7 +619,7 @@ void VoxelRenderer::BuildBlockTextureMap()
         sizeof(uint32_t), TABLE_SIZE, true, false, textureMap.data());
     _blockTextureMapSRV = _renderer->CreateStructuredBufferSRV(_blockTextureMapBuffer);
 
-    std::cout << "Block texture map created: " << TABLE_SIZE << " entries" << std::endl;
+    _logger.Info("[VoxelRenderer] Block texture map created: %u entries", TABLE_SIZE);
 }
 
 std::vector<uint32_t> VoxelRenderer::GenerateQuadIndices(uint32_t maxFaces)

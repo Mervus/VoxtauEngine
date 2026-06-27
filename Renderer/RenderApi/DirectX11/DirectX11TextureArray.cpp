@@ -4,7 +4,6 @@
 
 #include "DirectX11TextureArray.h"
 #include "Resources/TextureData.h"
-#include <iostream>
 #include <cmath>
 
 DirectX11TextureArray::DirectX11TextureArray()
@@ -26,7 +25,7 @@ bool DirectX11TextureArray::Create(
     bool generateMips)
 {
     if (textures.empty()) {
-        std::cerr << "No textures provided for texture array!" << std::endl;
+        _logger.Error("[DirectX11TextureArray] No textures provided!");
         return false;
     }
 
@@ -38,9 +37,8 @@ bool DirectX11TextureArray::Create(
     // Validate all textures have same dimensions
     for (size_t i = 1; i < textures.size(); i++) {
         if (textures[i]->GetWidth() != width || textures[i]->GetHeight() != height) {
-            std::cerr << "Texture " << i << " has different dimensions! Expected "
-                      << width << "x" << height << ", got "
-                      << textures[i]->GetWidth() << "x" << textures[i]->GetHeight() << std::endl;
+            _logger.Error("[DirectX11TextureArray] Texture %zu has different dimensions! Expected %dx%d, got %dx%d",
+                          i, width, height, textures[i]->GetWidth(), textures[i]->GetHeight());
             return false;
         }
     }
@@ -72,7 +70,7 @@ bool DirectX11TextureArray::Create(
     // Create the texture array without initial data
     HRESULT hr = device->CreateTexture2D(&texDesc, nullptr, &textureArray);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create texture array!" << std::endl;
+        _logger.Error("[DirectX11TextureArray] Failed to create texture array!");
         return false;
     }
 
@@ -87,7 +85,7 @@ bool DirectX11TextureArray::Create(
 
     hr = device->CreateShaderResourceView(textureArray.Get(), &srvDesc, &srv);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create SRV for texture array!" << std::endl;
+        _logger.Error("[DirectX11TextureArray] Failed to create SRV for texture array!");
         return false;
     }
 
@@ -187,7 +185,7 @@ bool DirectX11TextureArray::CreateEmpty(
 
     HRESULT hr = device->CreateTexture2D(&texDesc, nullptr, &textureArray);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create empty texture array!" << std::endl;
+        _logger.Error("[DirectX11TextureArray] Failed to create empty texture array!");
         return false;
     }
 
@@ -201,7 +199,7 @@ bool DirectX11TextureArray::CreateEmpty(
 
     hr = device->CreateShaderResourceView(textureArray.Get(), &srvDesc, &srv);
     if (FAILED(hr)) {
-        std::cerr << "Failed to create SRV for empty texture array!" << std::endl;
+        _logger.Error("[DirectX11TextureArray] Failed to create SRV for empty texture array!");
         return false;
     }
 
@@ -215,7 +213,7 @@ bool DirectX11TextureArray::UploadSlice(
     int channels)
 {
     if (sliceIndex < 0 || sliceIndex >= arraySize) {
-        std::cerr << "Invalid slice index: " << sliceIndex << std::endl;
+        _logger.Error("[DirectX11TextureArray] Invalid slice index: %d", sliceIndex);
         return false;
     }
 

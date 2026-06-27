@@ -9,6 +9,7 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 
+#include "Core/Log/Logger.h"
 #include "../../Vertex.h"
 
 template<typename T>
@@ -16,6 +17,7 @@ using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 class DirectX11Mesh {
 private:
+    Log _logger {Log::ClientLog};
     ComPtr<ID3D11Buffer> vertexBuffer;
     ComPtr<ID3D11Buffer> indexBuffer;
     ComPtr<ID3D11InputLayout> inputLayout;

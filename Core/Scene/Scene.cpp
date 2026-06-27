@@ -14,6 +14,9 @@ Scene::Scene(const std::string& name)
     , renderer(nullptr)
     , shaderCollection(nullptr)
     , resourceManager(nullptr)
+    , inputManager(nullptr)
+    , clientSession(nullptr)
+    , logger(nullptr)
 {
 }
 
@@ -69,10 +72,11 @@ Camera* Scene::GetMainCamera() const {
     return mainCamera;
 }
 
-void Scene::SetSystems(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* input, ClientSession* clientSession) {
+void Scene::SetSystems(IRendererApi* renderer, ShaderCollection* shaders, ResourceManager* resources, InputManager* input, ClientSession* clientSession, Log* logger) {
     this->renderer = renderer;
     this->shaderCollection = shaders;
     this->resourceManager = resources;
     this->inputManager = input;
     this->clientSession = clientSession;
+    this->logger = logger;
 }

@@ -43,14 +43,13 @@ ClientSession::~ClientSession() {
 
 void ClientSession::Initialize(INetworkTransport* transport) {
     _transport = transport;
-
     // Create a local physics instance for prediction.
     // This runs the same VoxelPhysics code as the server, but only
     // simulates the local player's body. It needs a solid query —
     // for singleplayer, the server's ChunkManager is in-process so
     // we can share the query. For remote, we'd use the client's
     // local chunk data.
-    _predictionPhysics = std::make_unique<VoxelPhysics>();
+    _predictionPhysics = make_unique_logged<VoxelPhysics>();
 
     _interpolator = std::make_unique<EntityInterpolator>();
 
@@ -65,7 +64,7 @@ void ClientSession::Initialize(INetworkTransport* transport) {
     _lastAckedServerTick = 0;
     _connected = false;
 
-    std::cout << "[Client] Initialized" << std::endl;
+    _clientLogger.Info("[ClientSession] Initialized");
 }
 
 void ClientSession::InitializePrediction(const Math::Vector3& startPos, float bodyWidth, float bodyHeight) {
@@ -81,9 +80,8 @@ void ClientSession::InitializePrediction(const Math::Vector3& startPos, float bo
     _simulationPosition = startPos;
     _visualPosition = startPos;
 
-    std::cout << "[Client] Prediction body: " << _predictionBody.value << std::endl;
-    std::cout << "[Client] Prediction initialized at ("
-              << startPos.x << ", " << startPos.y << ", " << startPos.z << ")" << std::endl;
+    _clientLogger.Info("[ClientSession] Prediction body: %u", _predictionBody.value);
+    _clientLogger.Info("[ClientSession] Prediction initialized at: %u, %u, %u", startPos.x, startPos.y, startPos.z);
 }
 
 void ClientSession::Shutdown() {
@@ -95,7 +93,7 @@ void ClientSession::Shutdown() {
     _interpolator.reset();
     _connected = false;
 
-    std::cout << "[Client] Shutdown" << std::endl;
+    _clientLogger.Info("[ClientSession] Shutdown");
 }
 
 void ClientSession::Connect(const std::string& address, uint16_t port) {
@@ -243,12 +241,13 @@ void ClientSession::ProcessServerSnapshots() {
         case NetworkEvent::Type::Connected:
             _connected = true;
             _serverConnectionId = event.connection;
-            std::cout << "[Client] Connected to server" << std::endl;
+            //_clientLogger.Info("[ClientSession] Connected to server: %s:%u", event.address.c_str(), event.port);
+            _clientLogger.Info("[ClientSession] Connected to server");
             break;
 
         case NetworkEvent::Type::Disconnected:
             _connected = false;
-            std::cout << "[Client] Disconnected from server" << std::endl;
+            _clientLogger.Info("[ClientSession] Disconnected from server");
             break;
 
         case NetworkEvent::Type::DataReceived:
@@ -300,7 +299,7 @@ void ClientSession::ProcessServerSnapshots() {
                             case EntityType::Player:
                                 _localEntityManager->CreateEntityWithID<PlayerEntity>(id, "RemotePlayer");
                                 break;
-                            default: std::cerr << "[Client] Unknown entity type " << static_cast<int>(type) << std::endl;
+                            default: _clientLogger.Error("[ClientSession] Unknown entity type %u", static_cast<int>(type));
                             }
 
                             _localEntityManager->CreateEntityWithID<PlayerEntity>(id, "RemotePlayer");
@@ -362,7 +361,7 @@ void ClientSession::ProcessServerSnapshots() {
             }
 
             case PacketType::PlayerSpawn: {
-                    std::cout << "[Client] Received PlayerSpawn packet" << std::endl;
+                    _clientLogger.Info("[ClientSession] Received PlayerSpawn packet");
                     // Server telling us which entity is our player
                     PacketSerializer::PlayerSpawnData spawnData;
                     if (PacketSerializer::DeserializePlayerSpawn(event.data, spawnData))
@@ -377,14 +376,12 @@ void ClientSession::ProcessServerSnapshots() {
 
                         SetLocalPlayerEntity(playerId);
 
-                        std::cout << "[Client] Assigned player entity "
-                                    << playerId.Get() << " at ("
-                                    << _spawnPosition.x << ", " << _spawnPosition.y << ", "
-                                    << _spawnPosition.z << ")" << std::endl;
+                        _clientLogger.Info("[ClientSession] Assigned player entity %u at (%u, %u, %u)",
+                            playerId.Get(), spawnData.spawnPos.x, spawnData.spawnPos.y, spawnData.spawnPos.z );
 
                         InitializePrediction(spawnData.spawnPos, 0.6f, 1.8f);
 
-                        std::cout << "[Client] Sending ClientReady on conn=" << _serverConnectionId << std::endl;
+                        _clientLogger.Info("[ClientSession] Sending ClientReady on conn=%u", _serverConnectionId);
 
                         std::vector<uint8_t> readyPacket = { static_cast<uint8_t>(PacketType::ClientReady) };
                         _transport->SendPacket(_serverConnectionId, readyPacket, 1, SendMode::Reliable);
@@ -393,7 +390,7 @@ void ClientSession::ProcessServerSnapshots() {
             }
 
             case PacketType::EntitySpawn: {
-                    std::cout << "[Client] Received EntitySpawn packet" << std::endl;
+                    _clientLogger.Info("[ClientSession] Received EntitySpawn packet");
                     PacketSerializer::EntitySpawnData entitySpawnData;
                     if (PacketSerializer::DeserializeEntitySpawn(event.data, entitySpawnData))
                     {

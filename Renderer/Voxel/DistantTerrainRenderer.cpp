@@ -12,7 +12,6 @@
 #include "Resources/Mesh.h"
 #include <vector>
 #include <cmath>
-#include <iostream>
 
 DistantTerrainRenderer::DistantTerrainRenderer(IRendererApi* renderer, ShaderCollection* shaderCollection)
     : _renderer(renderer)
@@ -59,7 +58,7 @@ void DistantTerrainRenderer::Build(const TerrainGenerator* terrain,
     _settings = settings;
 
     if (!terrain) {
-        std::cerr << "DistantTerrainRenderer: No terrain generator!" << std::endl;
+        _logger.Error("[DistantTerrainRenderer] No terrain generator!");
         return;
     }
 
@@ -68,7 +67,7 @@ void DistantTerrainRenderer::Build(const TerrainGenerator* terrain,
         "Assets/Shaders/Terrain/distant_terrain.pixel.hlsl");
 
     if (!_shader) {
-        std::cerr << "DistantTerrainRenderer: Failed to load shader!" << std::endl;
+        _logger.Error("[DistantTerrainRenderer] Failed to load shader!");
         return;
     }
 
@@ -81,8 +80,8 @@ void DistantTerrainRenderer::Build(const TerrainGenerator* terrain,
     int gridW = gridRadius * 2 + 1;
     int gridH = gridW;
 
-    std::cout << "DistantTerrainRenderer: Building blocky heightmap "
-              << gridW << "x" << gridH << " (cell=" << cell << ")" << std::endl;
+    _logger.Info("[DistantTerrainRenderer] Building blocky heightmap %dx%d (cell=%d)",
+                 gridW, gridH, cell);
 
     // Step 1: Sample heights — snap to integers for blocky look
     std::vector<float> heights(gridW * gridH, -1.0f);
@@ -206,7 +205,7 @@ void DistantTerrainRenderer::Build(const TerrainGenerator* terrain,
     }
 
     if (indices.empty()) {
-        std::cerr << "DistantTerrainRenderer: No terrain triangles!" << std::endl;
+        _logger.Error("[DistantTerrainRenderer] No terrain triangles!");
         return;
     }
 
@@ -215,7 +214,7 @@ void DistantTerrainRenderer::Build(const TerrainGenerator* terrain,
     _mesh->SetData(vertices, indices);
 
     if (!_renderer->CreateMesh(_mesh)) {
-        std::cerr << "DistantTerrainRenderer: Failed to create GPU mesh!" << std::endl;
+        _logger.Error("[DistantTerrainRenderer] Failed to create GPU mesh!");
         delete _mesh;
         _mesh = nullptr;
         return;
@@ -224,9 +223,7 @@ void DistantTerrainRenderer::Build(const TerrainGenerator* terrain,
     _renderer->CreateMeshInputLayout(_mesh, _shader->GetVertexShader());
     _mesh->ReleaseCPUData();
 
-    std::cout << "DistantTerrainRenderer: "
-              << vertices.size() << " verts, "
-              << indices.size() / 3 << " tris" << std::endl;
+    _logger.Info("[DistantTerrainRenderer] %zu verts, %zu tris", vertices.size(), indices.size() / 3);
 }
 
 void DistantTerrainRenderer::Rebuild(const TerrainGenerator* terrain)
